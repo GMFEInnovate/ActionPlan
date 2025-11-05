@@ -9,8 +9,6 @@
       margin:0;
       font-family:"Aptos","Segoe UI",Arial,sans-serif;
       background:#f3f4f6;
-      /* no global horizontal scroll needed now */
-      overflow-x:hidden;
     }
     .wrap{
       display:flex;
@@ -18,7 +16,6 @@
       padding:16px;
       height:100vh;
       box-sizing:border-box;
-      /* no fixed min-width, let it stack on small screens */
     }
     .panel{
       background:#fff;
@@ -30,7 +27,6 @@
       display:flex;
       flex-direction:column;
       max-height:100%;
-      min-width:360px;
     }
     .panel h2{margin-top:0;font-size:16px;}
     .panel-scroll{overflow-y:auto;flex:1;min-height:0;}
@@ -79,6 +75,7 @@
       background:#fff;
       min-height:400px;
     }
+    /* diagnostic spacing */
     .diag-section>label{margin-top:4px;margin-bottom:0;line-height:1;}
     .diag-section .radio-group{margin:0 0 4px 0;}
     .radio-group{display:flex;flex-wrap:wrap;gap:4px;}
@@ -103,15 +100,11 @@
     #q6Group{gap:3px 3px;}
     .internal-input{background:#f3f4f6;}
     #exportHelp{margin-top:6px;font-size:11px;color:#4b5563;line-height:1.35;}
-    .q6-extra{display:none;}
-    .error-hint{
-      font-size:11px;
-      color:#b91c1c;
-      margin-top:3px;
-    }
+    /* hide barrier extras by default */
+    .barrier-extra{display:none;}
     @media(max-width:1000px){
       .wrap{flex-direction:column;height:auto;}
-      .panel{max-height:none;min-width:0;}
+      .panel{max-height:none;}
       .panel-scroll{max-height:none;}
       .row,.row3{grid-template-columns:1fr;}
     }
@@ -167,24 +160,14 @@
           <div><label>Business contact<input id="contactName" oninput="renderPreview()" /></label></div>
         </div>
         <div class="row">
-          <div>
-            <label>Contact email
-              <input id="contactEmail" type="email" onblur="validateEmail()" oninput="renderPreview()" />
-            </label>
-            <div id="contactEmailErr" class="error-hint" style="display:none;">Please enter a valid email (e.g. name@company.com)</div>
-          </div>
-          <div>
-            <label>Phone
-              <input id="contactPhone" onblur="validatePhone()" oninput="renderPreview()" />
-            </label>
-            <div id="contactPhoneErr" class="error-hint" style="display:none;">Enter a valid UK number (e.g. 0161..., 07...)</div>
-          </div>
+          <div><label>Contact email<input id="contactEmail" type="email" oninput="renderPreview()" /></label></div>
+          <div><label>Phone<input id="contactPhone" oninput="renderPreview()" /></label></div>
         </div>
         <div class="row">
           <div>
             <label>Sector
-              <select id="sector" onchange="handleSectorChange();renderPreview();">
-                <option value="">— select —</option>
+              <select id="sector" onchange="toggleSectorOther();renderPreview()">
+                <option value="">— select sector —</option>
                 <option>Accommodation / Food</option>
                 <option>Administrative &amp; Support</option>
                 <option>Agriculture Forestry &amp; Fishing</option>
@@ -205,9 +188,7 @@
                 <option value="Other">Other</option>
               </select>
             </label>
-            <label id="sectorOtherWrap" style="display:none;margin-top:4px;">Sector (Other)
-              <input id="sectorOther" maxlength="20" oninput="renderPreview()" placeholder="max 20 chars" />
-            </label>
+            <input id="sectorOther" placeholder="Other sector (max 20 chars)" maxlength="20" style="display:none;margin-top:6px;" oninput="renderPreview()" />
           </div>
           <div>
             <label>No. of employees
@@ -219,7 +200,7 @@
                 <option>10-49</option>
                 <option>50-99</option>
                 <option>100-249</option>
-                <option>>250</option>
+                <option>&gt;250</option>
               </select>
             </label>
           </div>
@@ -256,12 +237,11 @@
         <input type="hidden" id="q5" />
         <input type="hidden" id="q6" />
 
-        <!-- show only if Q6 = Other -->
-        <label id="barrierOtherWrap" class="q6-extra" style="margin-top:4px;">Barrier (if Other)
+        <label id="barrierOtherWrap" class="barrier-extra" style="margin-top:4px;">Barrier (if Other)
           <input id="barrierOther" maxlength="70" oninput="renderPreview()" placeholder="Enter the specific barrier the business has identified" />
         </label>
-        <label id="barrierOtherRespWrap" class="q6-extra" style="margin-top:4px;">Response (if Other)
-          <input id="barrierOtherResp" maxlength="120" oninput="renderPreview()" placeholder="Short note with options to address the barrier – optional" />
+        <label id="barrierResponseWrap" class="barrier-extra" style="margin-top:4px;">Response (if Other)
+          <input id="barrierResponse" maxlength="140" oninput="renderPreview()" placeholder="Short note with general options to address the barrier – optional" />
         </label>
       </fieldset>
 
@@ -282,7 +262,7 @@
           <div>
             <label>Referral 1 (Provider)
               <select id="ref1Provider" onchange="renderPreview()">
-                <option value="">— please import entries from Referral Partners.csv —</option>
+                <option value="">please import entries from Referral Partners.csv</option>
               </select>
             </label>
             <label>Business need
@@ -292,26 +272,23 @@
               <textarea id="ref1Impact" oninput="renderPreview()" placeholder="What tangible positive impact might this referral have for the business?"></textarea>
             </label>
             <label>Intro date
-              <input id="ref1Intro" type="date" oninput="validateDates(1);renderPreview()" />
+              <input id="ref1Intro" type="date" oninput="validateReferralDates(1);renderPreview()" />
+              <div id="ref1DateMsg" style="color:#b91c1c;font-size:11px;"></div>
             </label>
-            <div id="ref1IntroErr" class="error-hint" style="display:none;">Intro date cannot be before today.</div>
             <label>Check-in date
-              <input id="ref1Check" type="date" oninput="validateDates(1);renderPreview()" />
+              <input id="ref1Check" type="date" oninput="validateReferralDates(1);renderPreview()" />
             </label>
-            <div id="ref1CheckErr" class="error-hint" style="display:none;">Check-in cannot be before intro or today.</div>
             <label>Review date
-              <input id="ref1Review" type="date" oninput="validateDates(1);renderPreview()" />
+              <input id="ref1Review" type="date" oninput="validateReferralDates(1);renderPreview()" />
             </label>
-            <div id="ref1ReviewErr" class="error-hint" style="display:none;">Review cannot be before check-in.</div>
             <label>Impact date
-              <input id="ref1ImpactDate" type="date" oninput="validateDates(1);renderPreview()" />
+              <input id="ref1ImpactDate" type="date" oninput="validateReferralDates(1);renderPreview()" />
             </label>
-            <div id="ref1ImpactDateErr" class="error-hint" style="display:none;">Impact cannot be before review.</div>
           </div>
           <div>
             <label>Referral 2 (Provider)
               <select id="ref2Provider" onchange="renderPreview()">
-                <option value="">— please import entries from Referral Partners.csv —</option>
+                <option value="">please import entries from Referral Partners.csv</option>
               </select>
             </label>
             <label>Business need
@@ -321,26 +298,23 @@
               <textarea id="ref2Impact" oninput="renderPreview()" placeholder="What tangible positive impact might this referral have for the business?"></textarea>
             </label>
             <label>Intro date
-              <input id="ref2Intro" type="date" oninput="validateDates(2);renderPreview()" />
+              <input id="ref2Intro" type="date" oninput="validateReferralDates(2);renderPreview()" />
+              <div id="ref2DateMsg" style="color:#b91c1c;font-size:11px;"></div>
             </label>
-            <div id="ref2IntroErr" class="error-hint" style="display:none;">Intro date cannot be before today.</div>
             <label>Check-in date
-              <input id="ref2Check" type="date" oninput="validateDates(2);renderPreview()" />
+              <input id="ref2Check" type="date" oninput="validateReferralDates(2);renderPreview()" />
             </label>
-            <div id="ref2CheckErr" class="error-hint" style="display:none;">Check-in cannot be before intro or today.</div>
             <label>Review date
-              <input id="ref2Review" type="date" oninput="validateDates(2);renderPreview()" />
+              <input id="ref2Review" type="date" oninput="validateReferralDates(2);renderPreview()" />
             </label>
-            <div id="ref2ReviewErr" class="error-hint" style="display:none;">Review cannot be before check-in.</div>
             <label>Impact date
-              <input id="ref2ImpactDate" type="date" oninput="validateDates(2);renderPreview()" />
+              <input id="ref2ImpactDate" type="date" oninput="validateReferralDates(2);renderPreview()" />
             </label>
-            <div id="ref2ImpactDateErr" class="error-hint" style="display:none;">Impact cannot be before review.</div>
           </div>
           <div>
             <label>Referral 3 (Provider)
               <select id="ref3Provider" onchange="renderPreview()">
-                <option value="">— please import entries from Referral Partners.csv —</option>
+                <option value="">please import entries from Referral Partners.csv</option>
               </select>
             </label>
             <label>Business need
@@ -350,21 +324,18 @@
               <textarea id="ref3Impact" oninput="renderPreview()" placeholder="What tangible positive impact might this referral have for the business?"></textarea>
             </label>
             <label>Intro date
-              <input id="ref3Intro" type="date" oninput="validateDates(3);renderPreview()" />
+              <input id="ref3Intro" type="date" oninput="validateReferralDates(3);renderPreview()" />
+              <div id="ref3DateMsg" style="color:#b91c1c;font-size:11px;"></div>
             </label>
-            <div id="ref3IntroErr" class="error-hint" style="display:none;">Intro date cannot be before today.</div>
             <label>Check-in date
-              <input id="ref3Check" type="date" oninput="validateDates(3);renderPreview()" />
+              <input id="ref3Check" type="date" oninput="validateReferralDates(3);renderPreview()" />
             </label>
-            <div id="ref3CheckErr" class="error-hint" style="display:none;">Check-in cannot be before intro or today.</div>
             <label>Review date
-              <input id="ref3Review" type="date" oninput="validateDates(3);renderPreview()" />
+              <input id="ref3Review" type="date" oninput="validateReferralDates(3);renderPreview()" />
             </label>
-            <div id="ref3ReviewErr" class="error-hint" style="display:none;">Review cannot be before check-in.</div>
             <label>Impact date
-              <input id="ref3ImpactDate" type="date" oninput="validateDates(3);renderPreview()" />
+              <input id="ref3ImpactDate" type="date" oninput="validateReferralDates(3);renderPreview()" />
             </label>
-            <div id="ref3ImpactDateErr" class="error-hint" style="display:none;">Impact cannot be before review.</div>
           </div>
         </div>
       </fieldset>
@@ -376,7 +347,7 @@
       <button class="btn" onclick="saveAsPdf()">Save as PDF</button>
       <input id="importPlanFile" type="file" accept=".json,application/json" style="display:none" onchange="importPlanFile(this.files[0])" />
       <div id="exportHelp">
-        <p><strong>Export plan:</strong> downloads a plan file (e.g. <em>client-name-action-plan.json</em>) to your browser’s default downloads folder. Move it to your “Action Plans” folder if needed.</p>
+        <p><strong>Export plan:</strong> downloads a plan file (e.g. <em>client-name-action-plan.json</em>) to your usual Downloads folder. Move it into your “Action Plans” folder.</p>
         <p><strong>Import plan:</strong> choose a plan file you saved earlier and this page will refill.</p>
         <p><strong>Save as PDF:</strong> opens a print-style view – choose “Save as PDF”.</p>
         <p><strong>Copy to email:</strong> copies the formatted plan – open Outlook and paste.</p>
@@ -394,20 +365,22 @@
 </div>
 
 <script>
+/* colours / constants */
 const BRAND_PURPLE='#A02B93',
       HEADER_BLUE='#83CAEB',
       KEYREF_HEADER='#45B0E1',
       PROVIDER_HIGHLIGHT='#FFF455',
       BARRIER_GREY='#E5E7EB',
-      CLIENT_SHADE='#F3F4F6', /* lighter for client cells */
-      INTERNAL_SHADE='#E5E7EB'; /* keep internal a bit darker */
+      INTERNAL_SHADE='#F3F4F6',
+      INTERNAL_SHADE_DARK='#E5E7EB';
 const STEP1='#0C567E', STEP2='#05799D', STEP3='#0C9BB1', STEP4='#2AB2D6', STEP5='#45B0E1';
 const RAG_TO_HEX={Red:'#FF0000',Amber:'#FFC000',Green:'#00B050',Grey:'#E5E7EB'};
 const $=id=>document.getElementById(id);
 
-/* start empty – CSV only */
+/* referral directory empty by default */
 let referralDirectory=[];
 
+/* load / save defaults */
 function loadMyDefaults(){
   const c=localStorage.getItem('iap_my_college')||'';
   const b=localStorage.getItem('iap_my_bia')||'';
@@ -433,6 +406,13 @@ function saveMyDefaults(){
   setTimeout(()=>{$('saveStatus').textContent='';},2500);
 }
 
+/* sector other */
+function toggleSectorOther(){
+  const val=$('sector').value;
+  $('sectorOther').style.display=(val==='Other')?'block':'none';
+}
+
+/* rubric array */
 const rubric=[
   { q:'Q1 Ideas & Innovation', option:'Your business is not currently encouraging or implementing new ideas.', our:'Your business is not currently encouraging or implementing new ideas.', cons:'Without encouraging ideas, opportunities to improve efficiency, services, and competitiveness are easily lost. Ask whether this limits growth and adaptability within your business.', rag:'Red' },
   { q:'Q1 Ideas & Innovation', option:'Your business sometimes encourages and implements new ideas.', our:'Your business sometimes encourages and implements new ideas.', cons:'Think about what causes irregularity, ownership, process, or follow-through. Trialling light-touch routines such as quarterly reviews or a nominated lead could help ideas gain momentum.', rag:'Amber' },
@@ -463,35 +443,14 @@ const rubric=[
   { q:'Q6 Biggest Barrier', option:'You have identified lack of awareness as a key barrier to innovation.', our:'You have identified lack of awareness as a key barrier to innovation.', cons:'Limited visibility of opportunities can hold you back. Sector networks, peer examples, and case studies could provide inspiration. Your Business Innovation Advisor can connect you with networks and practical examples relevant to your sector.', rag:'Grey' },
   { q:'Q6 Biggest Barrier', option:'You have identified time as a key barrier to innovation.', our:'You have identified time as a key barrier to innovation.', cons:'Competing priorities make innovation difficult to prioritise. Starting with short, focused projects or time-limited trials can demonstrate value without major disruption.', rag:'Grey' },
   { q:'Q6 Biggest Barrier', option:'You have identified another barrier to innovation.', our:'You have identified another barrier to innovation.', cons:'Understanding the barrier in more depth will help point to the right kind of support, whether technical, financial, or strategic.', rag:'Grey' },
-  { q:'Q6 Biggest Barrier', option:'Other Bespoke response.', our:'Other Bespoke response.', cons:'We can explore this in more depth and signpost tailored support.', rag:'Grey' }
+  { q:'Q6 Biggest Barrier', option:'Other Bespoke response.', our:'Other Bespoke response.', cons:'We can explore this in more depth and signpost tailored support if required.', rag:'Grey' }
 ];
 
 function escapeHtml(s){
   return (s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[m]));
 }
-function handleSectorChange(){
-  const sel=$('sector').value;
-  const wrap=$('sectorOtherWrap');
-  if(sel==='Other'){
-    wrap.style.display='block';
-  }else{
-    wrap.style.display='none';
-    $('sectorOther').value='';
-  }
-}
-function toggleBarrierExtras(show){
-  const w1=$('barrierOtherWrap');
-  const w2=$('barrierOtherRespWrap');
-  if(show){
-    w1.style.display='block';
-    w2.style.display='block';
-  }else{
-    w1.style.display='none';
-    w2.style.display='none';
-    $('barrierOther').value='';
-    $('barrierOtherResp').value='';
-  }
-}
+
+/* render diagnostic radio groups */
 function renderRadioGroup(qName,containerId,inputId){
   const container=$(containerId);
   const options=rubric.filter(r=>r.q===qName).map(r=>r.option);
@@ -510,10 +469,7 @@ function renderRadioGroup(qName,containerId,inputId){
       [...container.children].forEach(c=>c.classList.remove('selected'));
       card.classList.add('selected');
       $(inputId).value=opt;
-      if(inputId==='q6'){
-        if(opt==='Other Bespoke response.'){ toggleBarrierExtras(true); }
-        else{ toggleBarrierExtras(false); }
-      }
+      handleBarrierVisibility();
       renderPreview();
     };
     card.onclick=()=>{input.checked=true;input.onchange();};
@@ -523,85 +479,53 @@ function renderRadioGroup(qName,containerId,inputId){
   });
 }
 
-/* CSV parsing – tolerant */
-function parseSimpleCsv(text){
-  const rows=[];
-  let cur=[];
-  let field='';
-  let inQuotes=false;
-  for(let i=0;i<text.length;i++){
-    const ch=text[i];
-    const next=text[i+1];
-    if(inQuotes){
-      if(ch==='"' && next==='"'){ field+='"'; i++; }
-      else if(ch==='"'){ inQuotes=false; }
-      else{ field+=ch; }
-    }else{
-      if(ch==='"'){ inQuotes=true; }
-      else if(ch===','){ cur.push(field.trim()); field=''; }
-      else if(ch==='\r'){ }
-      else if(ch==='\n'){ cur.push(field.trim()); rows.push(cur); cur=[]; field=''; }
-      else{ field+=ch; }
-    }
+/* show/hide extra barrier fields */
+function handleBarrierVisibility(){
+  const val=$('q6').value;
+  const isOther = (val === 'Other Bespoke response.');
+  $('barrierOtherWrap').style.display = isOther ? 'block' : 'none';
+  $('barrierResponseWrap').style.display = isOther ? 'block' : 'none';
+  if(!isOther){
+    $('barrierOther').value='';
+    $('barrierResponse').value='';
   }
-  if(field.length || cur.length){
-    cur.push(field.trim());
-    rows.push(cur);
-  }
-  return rows.filter(r=>r.some(c=>c!==''));
 }
-function processReferralCsvText(text){
-  const rows=parseSimpleCsv(text);
-  if(!rows.length) return false;
-  rows[0][0]=(rows[0][0]||'').replace(/^\uFEFF/,'');
-  const header=rows[0].map(h=>(h||'').trim());
-  const pIdx=header.findIndex(h=>h.toLowerCase()==='provider');
-  const oIdx=header.findIndex(h=>h.toLowerCase()==='outline');
-  if(pIdx===-1 || oIdx===-1) return false;
-  let added=0;
-  for(let i=1;i<rows.length;i++){
-    const r=rows[i];
-    const provider=(r[pIdx]||'').trim();
-    const outline=(r[oIdx]||'').trim();
-    if(!provider) continue;
-    referralDirectory.push({provider,outline});
-    added++;
-  }
-  fillReferralSelects();
-  renderPreview();
-  if(added){ alert('Loaded '+added+' referral(s) from CSV.'); }
-  return true;
-}
+
+/* CSV handler */
 function handleReferralCsv(file){
   if(!file) return;
   const reader=new FileReader();
   reader.onload=e=>{
-    const ok=processReferralCsvText(e.target.result);
-    if(!ok){
-      const reader2=new FileReader();
-      reader2.onload=e2=>{
-        const ok2=processReferralCsvText(e2.target.result);
-        if(!ok2) alert('CSV must have headers: Provider,Outline');
-      };
-      reader2.readAsText(file,'ISO-8859-1');
+    const text=e.target.result;
+    const rows=text.split(/\r?\n/).filter(r=>r.trim().length);
+    if(!rows.length) return;
+    const header=rows[0].split(',');
+    const pIdx=header.indexOf('Provider');
+    const oIdx=header.indexOf('Outline');
+    if(pIdx===-1 || oIdx===-1){
+      alert('CSV must have headers: Provider,Outline');
+      return;
     }
+    referralDirectory=[];
+    for(let i=1;i<rows.length;i++){
+      const cols=rows[i].split(',');
+      if(!cols[pIdx]) continue;
+      referralDirectory.push({
+        provider: cols[pIdx].trim(),
+        outline: (cols[oIdx]||'').trim()
+      });
+    }
+    fillReferralSelects();
+    renderPreview();
   };
   reader.readAsText(file);
 }
 function fillReferralSelects(){
-  let html='';
-  if(referralDirectory.length===0){
-    html='<option value="">— please import entries from Referral Partners.csv —</option>';
-  }else{
-    html='<option value="">— none —</option>'+referralDirectory.map(r=>`<option value="${r.provider}">${r.provider}</option>`).join('');
-  }
+  const html='<option value="">— select provider —</option>'+referralDirectory.map(r=>`<option value="${r.provider}">${r.provider}</option>`).join('');
   ['ref1Provider','ref2Provider','ref3Provider'].forEach(id=>{$(id).innerHTML=html;});
 }
-function lookupRubric(q,opt){
-  if(!opt) return null;
-  return rubric.find(r=>r.q===q && r.option===opt) || null;
-}
 
+/* build diagnostic table (email) */
 function buildDiagnosticTable(){
   const ideas=lookupRubric('Q1 Ideas & Innovation',$('q1').value);
   const strat=lookupRubric('Q2 Innovation Strategy',$('q2').value);
@@ -611,10 +535,10 @@ function buildDiagnosticTable(){
   const barrier=lookupRubric('Q6 Biggest Barrier',$('q6').value);
 
   const barrierOther=($('barrierOther').value||'').slice(0,70);
-  const barrierOtherResp=($('barrierOtherResp').value||'').slice(0,120);
-
-  const descWidth='80px';
-  const colWidth='93px';
+  let barrierResp=($('barrierResponse').value||'').trim();
+  if(!barrierResp){
+    barrierResp='We can explore this in more depth and signpost tailored support if required.';
+  }
 
   const cols=[
     { title:'💡 Ideas & Innovation',  data:ideas,   forceGrey:false },
@@ -625,62 +549,49 @@ function buildDiagnosticTable(){
     { title:'⚠️ Barriers',            data:barrier, forceGrey:true  }
   ];
 
+  const descWidth='96px', colWidth='90px';
+
   let header=`<tr>
-    <td style="width:${descWidth};background:${BARRIER_GREY};border:1px solid #ffffff;padding:5px;font-size:11px;font-weight:bold;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Area</td>`;
+    <td style="width:${descWidth};background:${INTERNAL_SHADE};border:0;padding:5px;font-size:11px;font-weight:bold;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;">Area</td>`;
   cols.forEach(col=>{
     const bg=col.forceGrey?BARRIER_GREY:(col.data?(RAG_TO_HEX[col.data.rag]||RAG_TO_HEX.Grey):RAG_TO_HEX.Grey);
-    const color=col.forceGrey?'#111827':'#ffffff';
-    header+=`<td style="width:${colWidth};background:${bg};border:1px solid #ffffff;padding:4px;font-size:11px;font-weight:bold;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:${color};mso-line-height-rule:exactly;">${col.title}</td>`;
+    header+=`<td style="width:${colWidth};background:${bg};border:0;padding:4px;font-size:11px;font-weight:bold;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#ffffff;mso-line-height-rule:exactly;">${col.title}</td>`;
   });
   header+='</tr>';
-  header+=`<tr><td colspan="7" style="height:6px;line-height:6px;font-size:0;"></td></tr>`;
+  header+=`<tr><td colspan="7" style="height:4px;font-size:0;line-height:0;"></td></tr>`;
 
   let yourRow=`<tr>
-    <td style="width:${descWidth};background:${BARRIER_GREY};border:1px solid #ffffff;padding:5px;font-size:11px;font-weight:bold;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Your response</td>`;
+    <td style="width:${descWidth};background:${INTERNAL_SHADE};border:0;padding:5px;font-size:11px;font-weight:bold;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;">Your response</td>`;
   cols.forEach(col=>{
-    let cellText='';
-    if(col.data){
-      if(col.forceGrey && col.data.option==='Other Bespoke response.'){
-        cellText=barrierOther || '';
-      }else{
-        cellText=col.data.our;
-      }
+    let t = col.data ? col.data.our : '';
+    if(col.forceGrey && $('q6').value==='Other Bespoke response.'){
+      t = barrierOther;
     }
-    yourRow+=`<td style="width:${colWidth};background:#ffffff;border:1px solid #d1d5db;padding:4px;font-size:10px;vertical-align:top;font-family:'Aptos','Segoe UI',Arial,sans-serif;word-break:break-word;overflow-wrap:break-word;mso-line-height-rule:exactly;">${escapeHtml(cellText)}</td>`;
+    yourRow+=`<td style="width:${colWidth};background:#ffffff;border:1px solid #e5e7eb;padding:4px;font-size:10px;vertical-align:top;line-height:1.3;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;word-break:break-word;">${escapeHtml(t||'')}</td>`;
   });
   yourRow+='</tr>';
-
-  const midSpacer = `<tr><td colspan="7" style="height:6px;line-height:6px;font-size:0;"></td></tr>`;
+  yourRow+=`<tr><td colspan="7" style="height:4px;font-size:0;line-height:0;"></td></tr>`;
 
   let cons=`<tr>
-    <td style="width:${descWidth};background:${BARRIER_GREY};border:1px solid #ffffff;padding:5px;font-size:11px;font-weight:bold;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Considerations</td>`;
+    <td style="width:${descWidth};background:${INTERNAL_SHADE};border:0;padding:5px;font-size:11px;font-weight:bold;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;">Considerations</td>`;
   cols.forEach(col=>{
-    let t='';
-    if(col.forceGrey && col.data && col.data.option==='Other Bespoke response.'){
-      if(barrierOtherResp){
-        t=escapeHtml(barrierOtherResp);
-      }else{
-        t='We can explore this in more depth and signpost tailored support if required.';
-      }
-    }else{
-      t=col.data ? col.data.cons : '';
+    let t = col.data ? col.data.cons : '';
+    if(col.forceGrey && $('q6').value==='Other Bespoke response.'){
+      t = barrierResp;
     }
-    cons+=`<td style="width:${colWidth};background:#ffffff;border:1px solid #d1d5db;padding:4px;font-size:10px;line-height:1.25;vertical-align:top;word-break:break-word;overflow-wrap:break-word;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${t}</td>`;
+    cons+=`<td style="width:${colWidth};background:#ffffff;border:1px solid #e5e7eb;padding:4px;font-size:10px;vertical-align:top;line-height:1.3;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;word-break:break-word;">${t}</td>`;
   });
   cons+='</tr>';
-  const spacer = `<tr><td colspan="7" style="height:6px;line-height:6px;font-size:0;"></td></tr>`;
 
-  return `
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;table-layout:fixed;mso-table-lspace:0pt;mso-table-rspace:0pt;">
-      ${header}
-      ${yourRow}
-      ${midSpacer}
-      ${cons}
-      ${spacer}
-    </table>
-  `;
+  return `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;table-layout:fixed;">${header}${yourRow}${cons}</table>`;
 }
 
+function lookupRubric(q,opt){
+  if(!opt) return null;
+  return rubric.find(r=>r.q===q && r.option===opt) || null;
+}
+
+/* key referrals table */
 function buildKeyReferralsTable(){
   const slots=[
     {prov:'ref1Provider',need:'ref1Need',impact:'ref1Impact'},
@@ -696,219 +607,194 @@ function buildKeyReferralsTable(){
     const ref=referralDirectory.find(r=>r.provider===providerName);
     rows.push(`
       <tr>
-        <td style="border:1px solid #d1d5db;padding:8px;font-size:12px;width:23%;vertical-align:top;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(need)}</td>
-        <td style="border:1px solid #d1d5db;padding:8px;font-size:12px;width:19%;vertical-align:top;background:${PROVIDER_HIGHLIGHT};font-weight:bold;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${providerName?escapeHtml(providerName):''}</td>
-        <td style="border:1px solid #d1d5db;padding:8px;font-size:12px;width:33%;vertical-align:top;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${ref?escapeHtml(ref.outline):''}</td>
-        <td style="border:1px solid #d1d5db;padding:8px;font-size:12px;width:25%;vertical-align:top;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(impact)}</td>
+        <td style="background:#ffffff;border:1px solid #e5e7eb;padding:8px 8px 6px 8px;font-size:12px;vertical-align:top;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;">${escapeHtml(need)}</td>
+        <td style="background:${PROVIDER_HIGHLIGHT};border:0;padding:8px 8px 6px 8px;font-size:14px;vertical-align:top;font-weight:bold;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;">${providerName?escapeHtml(providerName):''}</td>
+        <td style="background:#ffffff;border:1px solid #e5e7eb;padding:8px 8px 6px 8px;font-size:12px;vertical-align:top;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;">${ref?escapeHtml(ref.outline):''}</td>
+        <td style="background:#ffffff;border:1px solid #e5e7eb;padding:8px 8px 6px 8px;font-size:12px;vertical-align:top;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;">${escapeHtml(impact)}</td>
       </tr>
-      <tr><td colspan="4" style="height:6px;line-height:6px;font-size:0;"></td></tr>
+      <tr><td colspan="4" style="height:6px;font-size:0;line-height:0;"></td></tr>
     `);
   });
   if(!rows.length){
-    return `<p style="font-size:12px;font-style:italic;font-family:'Aptos','Segoe UI',Arial,sans-serif;">No referrals recorded.</p>`;
+    return `<p style="font-size:12px;font-style:italic;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;">No referrals recorded.</p>`;
   }
   return `
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
       <tr>
-        <td style="background:${KEYREF_HEADER};color:#ffffff;border:1px solid #ffffff;padding:7px 8px;font-size:14px;text-align:center;font-weight:bold;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Business Need</td>
-        <td style="background:${KEYREF_HEADER};color:#ffffff;border:1px solid #ffffff;padding:7px 8px;font-size:14px;text-align:center;font-weight:bold;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Referral / Provider</td>
-        <td style="background:${KEYREF_HEADER};color:#ffffff;border:1px solid #ffffff;padding:7px 8px;font-size:14px;text-align:center;font-weight:bold;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Outline</td>
-        <td style="background:${KEYREF_HEADER};color:#ffffff;border:1px solid #ffffff;padding:7px 8px;font-size:14px;text-align:center;font-weight:bold;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Intended Impact</td>
+        <td style="background:${KEYREF_HEADER};padding:7px 8px;font-size:14px;font-weight:bold;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#ffffff;mso-line-height-rule:exactly;">Business Need</td>
+        <td style="background:${KEYREF_HEADER};padding:7px 8px;font-size:14px;font-weight:bold;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#ffffff;mso-line-height-rule:exactly;">Referral / Provider</td>
+        <td style="background:${KEYREF_HEADER};padding:7px 8px;font-size:14px;font-weight:bold;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#ffffff;mso-line-height-rule:exactly;">Outline</td>
+        <td style="background:${KEYREF_HEADER};padding:7px 8px;font-size:14px;font-weight:bold;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#ffffff;mso-line-height-rule:exactly;">Intended Impact</td>
       </tr>
-      <tr><td colspan="4" style="height:6px;line-height:6px;font-size:0;"></td></tr>
+      <tr><td colspan="4" style="height:6px;font-size:0;line-height:0;"></td></tr>
       ${rows.join('')}
     </table>
   `;
 }
 
+/* roadmap / action plan tables – single header, multiple rows */
 function buildSupportTables(){
-  const slots = [
+  const slots=[
     {prov:'ref1Provider',intro:'ref1Intro',check:'ref1Check',review:'ref1Review',impact:'ref1ImpactDate'},
     {prov:'ref2Provider',intro:'ref2Intro',check:'ref2Check',review:'ref2Review',impact:'ref2ImpactDate'},
     {prov:'ref3Provider',intro:'ref3Intro',check:'ref3Check',review:'ref3Review',impact:'ref3ImpactDate'}
   ];
-  const rows = [];
-
-  slots.forEach(s => {
-    const providerName = $(s.prov).value;
-    const intro  = $(s.intro).value  || '—';
-    const check  = $(s.check).value  || '—';
-    const review = $(s.review).value || '—';
-    const impact = $(s.impact).value || '—';
-
-    if (!providerName && intro==='—' && check==='—' && review==='—' && impact==='—') return;
-
-    rows.push(`
+  let rows='';
+  slots.forEach(s=>{
+    const providerName=$(s.prov).value || '—';
+    const intro=$(s.intro).value || '—';
+    const check=$(s.check).value || '—';
+    const review=$(s.review).value || '—';
+    const impact=$(s.impact).value || '—';
+    if(providerName==='—' && intro==='—' && check==='—' && review==='—' && impact==='—') return;
+    rows+=`
       <tr>
-        <td style="background:#ffffff;font-size:12px;padding:11px 6px;border:1px solid #d1d5db;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">
-          <strong>${escapeHtml(providerName || '—')}</strong>
-        </td>
-        <td style="background:#ffffff;font-size:12px;padding:11px 6px;border:1px solid #d1d5db;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">
-          ${intro}
-        </td>
-        <td style="background:#ffffff;font-size:12px;padding:11px 6px;border:1px solid #d1d5db;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">
-          ${check}
-        </td>
-        <td style="background:#ffffff;font-size:12px;padding:11px 6px;border:1px solid #d1d5db;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">
-          ${review}
-        </td>
-        <td style="background:#ffffff;font-size:12px;padding:11px 6px;border:1px solid #d1d5db;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">
-          ${impact}
-        </td>
+        <td style="background:#ffffff;border:1px solid #e5e7eb;padding:10px 6px;font-size:12px;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;"><strong>${escapeHtml(providerName)}</strong></td>
+        <td style="background:#ffffff;border:1px solid #e5e7eb;padding:10px 6px;font-size:12px;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;">${intro}</td>
+        <td style="background:#ffffff;border:1px solid #e5e7eb;padding:10px 6px;font-size:12px;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;">${check}</td>
+        <td style="background:#ffffff;border:1px solid #e5e7eb;padding:10px 6px;font-size:12px;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;">${review}</td>
+        <td style="background:#ffffff;border:1px solid #e5e7eb;padding:10px 6px;font-size:12px;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;">${impact}</td>
       </tr>
-      <tr>
-        <td colspan="5" style="height:6px;line-height:6px;font-size:0;"></td>
-      </tr>
-    `);
+      <tr><td colspan="5" style="height:5px;font-size:0;line-height:0;"></td></tr>
+    `;
   });
 
-  if (!rows.length) {
-    rows.push(`
+  if(!rows){
+    rows=`
       <tr>
-        <td style="background:#ffffff;font-size:12px;padding:11px 6px;border:1px solid #d1d5db;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;"><strong>—</strong></td>
-        <td style="background:#ffffff;font-size:12px;padding:11px 6px;border:1px solid #d1d5db;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">—</td>
-        <td style="background:#ffffff;font-size:12px;padding:11px 6px;border:1px solid #d1d5db;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">—</td>
-        <td style="background:#ffffff;font-size:12px;padding:11px 6px;border:1px solid #d1d5db;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">—</td>
-        <td style="background:#ffffff;font-size:12px;padding:11px 6px;border:1px solid #d1d5db;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">—</td>
+        <td style="background:#ffffff;border:1px solid #e5e7eb;padding:10px 6px;font-size:12px;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;"><strong>—</strong></td>
+        <td style="background:#ffffff;border:1px solid #e5e7eb;padding:10px 6px;font-size:12px;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;">—</td>
+        <td style="background:#ffffff;border:1px solid #e5e7eb;padding:10px 6px;font-size:12px;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;">—</td>
+        <td style="background:#ffffff;border:1px solid #e5e7eb;padding:10px 6px;font-size:12px;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;">—</td>
+        <td style="background:#ffffff;border:1px solid #e5e7eb;padding:10px 6px;font-size:12px;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;">—</td>
       </tr>
-    `);
+    `;
   }
 
   return `
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;table-layout:fixed;mso-table-lspace:0pt;mso-table-rspace:0pt;margin-bottom:10px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
       <tr>
-        <td style="background:${STEP1};color:#ffffff;font-size:14px;font-weight:bold;padding:20px 6px;border-right:4px solid #ffffff;text-align:center;width:20%;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">1. Support</td>
-        <td style="background:${STEP2};color:#ffffff;font-size:14px;font-weight:bold;padding:20px 6px;border-right:4px solid #ffffff;text-align:center;width:20%;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">2. Introduction By</td>
-        <td style="background:${STEP3};color:#ffffff;font-size:14px;font-weight:bold;padding:20px 6px;border-right:4px solid #ffffff;text-align:center;width:20%;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">3. Check-In</td>
-        <td style="background:${STEP4};color:#ffffff;font-size:14px;font-weight:bold;padding:20px 6px;border-right:4px solid #ffffff;text-align:center;width:20%;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">4. Review</td>
-        <td style="background:${STEP5};color:#ffffff;font-size:14px;font-weight:bold;padding:20px 6px;text-align:center;width:20%;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">5. Impact</td>
+        <td style="background:${STEP1};padding:16px 6px;font-size:14px;font-weight:bold;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#ffffff;mso-line-height-rule:exactly;">1. Support</td>
+        <td style="background:${STEP2};padding:16px 6px;font-size:14px;font-weight:bold;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#ffffff;mso-line-height-rule:exactly;">2. Introduction By</td>
+        <td style="background:${STEP3};padding:16px 6px;font-size:14px;font-weight:bold;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#ffffff;mso-line-height-rule:exactly;">3. Check-In</td>
+        <td style="background:${STEP4};padding:16px 6px;font-size:14px;font-weight:bold;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#ffffff;mso-line-height-rule:exactly;">4. Review</td>
+        <td style="background:${STEP5};padding:16px 6px;font-size:14px;font-weight:bold;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#ffffff;mso-line-height-rule:exactly;">5. Impact</td>
       </tr>
-      <tr><td colspan="5" style="height:6px;line-height:6px;font-size:0;"></td></tr>
-      ${rows.join('')}
+      <tr><td colspan="5" style="height:6px;font-size:0;line-height:0;"></td></tr>
+      ${rows}
     </table>
   `;
 }
 
-function getSectorForEmail(){
-  const sel=$('sector').value;
-  if(sel==='Other'){
-    return $('sectorOther').value || 'Other';
-  }
-  return sel;
-}
-
+/* full email HTML */
 function emailHTML(){
   const bizName=$('bizName').value;
   const contactName=$('contactName').value;
   const contactEmail=$('contactEmail').value;
-  const sector=getSectorForEmail();
+  const contactPhone=$('contactPhone').value;
+  const sec=$('sector').value === 'Other' ? $('sectorOther').value : $('sector').value;
   const employees=$('employees').value;
   const advisor=$('advisor').value;
   const college=$('college').value;
   const planDate=$('planDate').value;
   const supportSumm=$('supportSummary').value;
 
+  const diagHtml=buildDiagnosticTable();
+  const keyRefHtml=buildKeyReferralsTable();
+  const supportHtml=buildSupportTables();
+
   return `
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-family:'Aptos','Segoe UI',Arial,sans-serif;font-size:11px;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-family:'Aptos','Segoe UI',Arial,sans-serif;font-size:12px;mso-line-height-rule:exactly;">
     <tr>
-      <td align="center" style="padding:0 0 18px 0;">
-        <table width="640" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;background:#ffffff;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+      <td align="center" style="padding:0 0 18px 0;font-family:'Aptos','Segoe UI',Arial,sans-serif;font-size:12px;color:#111827;mso-line-height-rule:exactly;">
+        <table width="640" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;background:#ffffff;">
           <tr>
-            <td style="padding:10px 12px 4px 12px; text-align:right;">
-              <img src="gmcolleges-logo.png"
-                   alt="GMColleges"
-                   width="140"
-                   style="display:block;border:0;outline:0;text-decoration:none;-ms-interpolation-mode:bicubic;">
+            <td style="padding:10px 12px 4px 12px;text-align:right;font-family:'Aptos','Segoe UI',Arial,sans-serif;font-size:12px;color:#111827;mso-line-height-rule:exactly;">
+              <img src="gmcolleges-logo.png" alt="GMColleges" width="140" style="display:block;border:0;outline:0;text-decoration:none;-ms-interpolation-mode:bicubic;">
             </td>
           </tr>
           <tr>
-            <td style="background:${BRAND_PURPLE}; padding:10px 12px; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif; font-size:20px; font-weight:bold;border:1px solid #ffffff;">
-              Innovation Action Plan
+            <td style="background:${BRAND_PURPLE};padding:10px 12px;font-family:'Aptos','Segoe UI',Arial,sans-serif;font-size:12px;color:#ffffff;mso-line-height-rule:exactly;">
+              <span style="font-size:20px;font-weight:bold;color:#ffffff;font-family:'Aptos','Segoe UI',Arial,sans-serif;">Innovation Action Plan</span>
             </td>
           </tr>
           <tr>
-            <td style="padding-top:8px;">
-              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-family:'Aptos','Segoe UI',Arial,sans-serif;table-layout:fixed;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+            <td style="padding-top:10px;font-family:'Aptos','Segoe UI',Arial,sans-serif;font-size:12px;color:#111827;mso-line-height-rule:exactly;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
                 <tr>
-                  <td width="25%" style="background:${HEADER_BLUE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-weight:bold; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Business Name</td>
-                  <td width="25%" style="background:${CLIENT_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(bizName)}</td>
-                  <td width="25%" style="background:${HEADER_BLUE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-weight:bold; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Business Contact</td>
-                  <td width="25%" style="background:${CLIENT_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(contactName)}</td>
+                  <td width="25%" style="background:${HEADER_BLUE};padding:6px;font-size:12px;font-weight:bold;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#ffffff;mso-line-height-rule:exactly;">Business Name</td>
+                  <td width="25%" style="background:${INTERNAL_SHADE};padding:6px;font-size:12px;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;">${escapeHtml(bizName)}</td>
+                  <td width="25%" style="background:${HEADER_BLUE};padding:6px;font-size:12px;font-weight:bold;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#ffffff;mso-line-height-rule:exactly;">Business Contact</td>
+                  <td width="25%" style="background:${INTERNAL_SHADE};padding:6px;font-size:12px;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;">${escapeHtml(contactName)}</td>
                 </tr>
-                <tr><td colspan="4" style="height:8px;line-height:8px;font-size:0;"></td></tr>
+                <tr><td colspan="4" style="height:6px;font-size:0;line-height:0;"></td></tr>
                 <tr>
-                  <td style="background:${HEADER_BLUE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-weight:bold; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Email</td>
-                  <td style="background:${CLIENT_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(contactEmail)}</td>
-                  <td style="background:${HEADER_BLUE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-weight:bold; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Sector</td>
-                  <td style="background:${CLIENT_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(sector)}</td>
+                  <td style="background:${HEADER_BLUE};padding:6px;font-size:12px;font-weight:bold;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#ffffff;mso-line-height-rule:exactly;">Email</td>
+                  <td style="background:${INTERNAL_SHADE};padding:6px;font-size:12px;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;">${escapeHtml(contactEmail)}</td>
+                  <td style="background:${HEADER_BLUE};padding:6px;font-size:12px;font-weight:bold;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#ffffff;mso-line-height-rule:exactly;">Phone</td>
+                  <td style="background:${INTERNAL_SHADE};padding:6px;font-size:12px;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;">${escapeHtml(contactPhone)}</td>
                 </tr>
-                <tr><td colspan="4" style="height:8px;line-height:8px;font-size:0;"></td></tr>
+                <tr><td colspan="4" style="height:6px;font-size:0;line-height:0;"></td></tr>
                 <tr>
-                  <td style="background:${HEADER_BLUE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-weight:bold; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">No. of employees</td>
-                  <td style="background:${CLIENT_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(employees)}</td>
-                  <td style="background:${HEADER_BLUE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-weight:bold; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Date</td>
-                  <td style="background:${CLIENT_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(planDate)}</td>
+                  <td style="background:${HEADER_BLUE};padding:6px;font-size:12px;font-weight:bold;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#ffffff;mso-line-height-rule:exactly;">Sector</td>
+                  <td style="background:${INTERNAL_SHADE};padding:6px;font-size:12px;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;">${escapeHtml(sec)}</td>
+                  <td style="background:${HEADER_BLUE};padding:6px;font-size:12px;font-weight:bold;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#ffffff;mso-line-height-rule:exactly;">No. of employees</td>
+                  <td style="background:${INTERNAL_SHADE};padding:6px;font-size:12px;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;">${escapeHtml(employees)}</td>
                 </tr>
-                <tr><td colspan="4" style="height:8px;line-height:8px;font-size:0;"></td></tr>
+                <tr><td colspan="4" style="height:6px;font-size:0;line-height:0;"></td></tr>
                 <tr>
-                  <td style="background:${INTERNAL_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-weight:bold; color:#111827; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Innovation Hub</td>
-                  <td style="background:${INTERNAL_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(college)}</td>
-                  <td style="background:${INTERNAL_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-weight:bold; color:#111827; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">BIA</td>
-                  <td style="background:${INTERNAL_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(advisor)}</td>
+                  <td style="background:${HEADER_BLUE};padding:6px;font-size:12px;font-weight:bold;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#ffffff;mso-line-height-rule:exactly;">Date</td>
+                  <td style="background:${INTERNAL_SHADE};padding:6px;font-size:12px;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;">${escapeHtml(planDate)}</td>
+                  <td style="background:${INTERNAL_SHADE_DARK};padding:6px;font-size:12px;font-weight:bold;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;">Innovation Hub</td>
+                  <td style="background:${INTERNAL_SHADE_DARK};padding:6px;font-size:12px;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;">${escapeHtml(college)}</td>
+                </tr>
+                <tr><td colspan="4" style="height:6px;font-size:0;line-height:0;"></td></tr>
+                <tr>
+                  <td style="background:${INTERNAL_SHADE_DARK};padding:6px;font-size:12px;font-weight:bold;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;">BIA</td>
+                  <td style="background:${INTERNAL_SHADE_DARK};padding:6px;font-size:12px;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;">${escapeHtml(advisor)}</td>
+                  <td style="background:${INTERNAL_SHADE};padding:6px;font-size:12px;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;"></td>
+                  <td style="background:${INTERNAL_SHADE};padding:6px;font-size:12px;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;"></td>
                 </tr>
               </table>
             </td>
           </tr>
 
-          <tr><td style="height:8px;"></td></tr>
+          <tr><td style="height:10px;font-size:0;line-height:0;"></td></tr>
           <tr>
-            <td style="background:${BRAND_PURPLE}; padding:7px 12px; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif; font-size:15px; font-weight:bold;border:1px solid #ffffff;">
-              Diagnostic Summary
-            </td>
+            <td style="background:${BRAND_PURPLE};padding:7px 12px;font-family:'Aptos','Segoe UI',Arial,sans-serif;font-size:15px;font-weight:bold;color:#ffffff;mso-line-height-rule:exactly;">Diagnostic Summary</td>
           </tr>
-          <tr><td style="height:4px;"></td></tr>
-          <tr><td>${buildDiagnosticTable()}</td></tr>
+          <tr><td style="height:4px;font-size:0;line-height:0;"></td></tr>
+          <tr><td style="font-family:'Aptos','Segoe UI',Arial,sans-serif;font-size:12px;color:#111827;mso-line-height-rule:exactly;">${diagHtml}</td></tr>
 
-          <tr><td style="height:10px;"></td></tr>
+          <tr><td style="height:10px;font-size:0;line-height:0;"></td></tr>
           <tr>
-            <td style="background:${BRAND_PURPLE}; padding:7px 12px; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif; font-size:15px; font-weight:bold;border:1px solid #ffffff;">
-              Business Support Summary
-            </td>
+            <td style="background:${BRAND_PURPLE};padding:7px 12px;font-family:'Aptos','Segoe UI',Arial,sans-serif;font-size:15px;font-weight:bold;color:#ffffff;mso-line-height-rule:exactly;">Business Support Summary</td>
           </tr>
           <tr>
-            <td style="padding:8px 0 10px 0; font-size:12px; line-height:1.35; font-family:'Aptos','Segoe UI',Arial,sans-serif; word-break:break-word; overflow-wrap:break-word; max-width:100%;mso-line-height-rule:exactly;">
-              ${escapeHtml(supportSumm)}
-            </td>
+            <td style="padding:8px 0 10px 0;font-size:12px;line-height:1.35;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:#111827;mso-line-height-rule:exactly;word-break:break-word;">${escapeHtml(supportSumm)}</td>
           </tr>
 
-          <tr><td style="height:10px;"></td></tr>
+          <tr><td style="height:10px;font-size:0;line-height:0;"></td></tr>
           <tr>
-            <td style="background:${BRAND_PURPLE}; padding:7px 12px; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif; font-size:15px; font-weight:bold;border:1px solid #ffffff;">
-              Key Referrals
-            </td>
+            <td style="background:${BRAND_PURPLE};padding:7px 12px;font-family:'Aptos','Segoe UI',Arial,sans-serif;font-size:15px;font-weight:bold;color:#ffffff;mso-line-height-rule:exactly;">Key Referrals</td>
           </tr>
           <tr>
-            <td style="padding:6px 0 10px 0;">
-              ${buildKeyReferralsTable()}
+            <td style="padding:6px 0 10px 0;font-family:'Aptos','Segoe UI',Arial,sans-serif;font-size:12px;color:#111827;mso-line-height-rule:exactly;">
+              ${keyRefHtml}
             </td>
           </tr>
 
           <tr>
-            <td style="background:${BRAND_PURPLE}; padding:7px 12px; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif; font-size:15px; font-weight:bold;border:1px solid #ffffff;">
-              Action Plan / Roadmap
+            <td style="background:${BRAND_PURPLE};padding:7px 12px;font-family:'Aptos','Segoe UI',Arial,sans-serif;font-size:15px;font-weight:bold;color:#ffffff;mso-line-height-rule:exactly;">Action Plan / Roadmap</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0 4px 0;font-family:'Aptos','Segoe UI',Arial,sans-serif;font-size:12px;color:#111827;mso-line-height-rule:exactly;">
+              <img src="innovation-journey.png" alt="Innovation journey" width="616" style="display:block;border:0;outline:0;text-decoration:none;margin-bottom:6px;-ms-interpolation-mode:bicubic;">
             </td>
           </tr>
           <tr>
-            <td style="padding:6px 0 4px 0;">
-              <img src="innovation-journey.png"
-                   alt="Innovation journey"
-                   width="616"
-                   style="display:block;border:0;outline:0;text-decoration:none;margin-bottom:6px;-ms-interpolation-mode:bicubic;">
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:0 0 16px 0;">
-              ${buildSupportTables()}
+            <td style="padding:0 0 16px 0;font-family:'Aptos','Segoe UI',Arial,sans-serif;font-size:12px;color:#111827;mso-line-height-rule:exactly;">
+              ${supportHtml}
             </td>
           </tr>
 
@@ -919,11 +805,13 @@ function emailHTML(){
   `;
 }
 
+/* render preview */
 function renderPreview(){
   const prev=$('emailPreview');
   if(prev) prev.innerHTML=emailHTML();
 }
 
+/* copy to email */
 function copyRenderedEmail(){
   const el=$('emailPreview');
   if(!el) return;
@@ -941,105 +829,7 @@ function copyRenderedEmail(){
   sel.removeAllRanges();
 }
 
-/* date + validation helpers */
-function todayISO(){
-  return new Date().toISOString().slice(0,10);
-}
-function validateDates(idx){
-  const today=todayISO();
-  const intro=$('ref'+idx+'Intro');
-  const check=$('ref'+idx+'Check');
-  const review=$('ref'+idx+'Review');
-  const impact=$('ref'+idx+'ImpactDate');
-
-  const introErr=$('ref'+idx+'IntroErr');
-  const checkErr=$('ref'+idx+'CheckErr');
-  const reviewErr=$('ref'+idx+'ReviewErr');
-  const impactErr=$('ref'+idx+'ImpactDateErr');
-
-  let introVal=intro.value;
-  if(introVal){
-    if(introVal < today){
-      introVal=today;
-      intro.value=introVal;
-      introErr.style.display='block';
-    }else{
-      introErr.style.display='none';
-    }
-  }else{
-    introErr.style.display='none';
-  }
-
-  let checkVal=check.value;
-  if(checkVal){
-    const minCheck = (introVal && introVal>today) ? introVal : today;
-    if(checkVal < minCheck){
-      checkVal=minCheck;
-      check.value=checkVal;
-      checkErr.style.display='block';
-    }else{
-      checkErr.style.display='none';
-    }
-  }else{
-    checkErr.style.display='none';
-  }
-
-  let reviewVal=review.value;
-  if(reviewVal){
-    const minReview = checkVal || introVal || today;
-    const actualMin = (minReview < today) ? today : minReview;
-    if(reviewVal < actualMin){
-      reviewVal=actualMin;
-      review.value=reviewVal;
-      reviewErr.style.display='block';
-    }else{
-      reviewErr.style.display='none';
-    }
-  }else{
-    reviewErr.style.display='none';
-  }
-
-  let impactVal=impact.value;
-  if(impactVal){
-    const minImpact = reviewVal || checkVal || introVal || today;
-    const actualIm = (minImpact < today) ? today : minImpact;
-    if(impactVal < actualIm){
-      impactVal=actualIm;
-      impact.value=impactVal;
-      impactErr.style.display='block';
-    }else{
-      impactErr.style.display='none';
-    }
-  }else{
-    impactErr.style.display='none';
-  }
-}
-
-function validateEmail(){
-  const el=$('contactEmail');
-  const err=$('contactEmailErr');
-  const v=el.value.trim();
-  if(!v){ err.style.display='none'; return; }
-  const re=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if(!re.test(v)){
-    err.style.display='block';
-  }else{
-    err.style.display='none';
-  }
-}
-function validatePhone(){
-  const el=$('contactPhone');
-  const err=$('contactPhoneErr');
-  const v=el.value.trim();
-  if(!v){ err.style.display='none'; return; }
-  const clean=v.replace(/[\s\-]/g,'');
-  if(!/^0\d{9,10}$/.test(clean)){
-    err.style.display='block';
-  }else{
-    err.style.display='none';
-  }
-}
-
+/* export plan */
 function getFormData(){
   return {
     version:1,
@@ -1062,38 +852,45 @@ function getFormData(){
     q5:$('q5').value,
     q6:$('q6').value,
     barrierOther:$('barrierOther').value,
-    barrierOtherResp:$('barrierOtherResp').value,
+    barrierResponse:$('barrierResponse').value,
     supportSummary:$('supportSummary').value,
     referrals:[
-      {
-        provider:$('ref1Provider').value,
-        need:$('ref1Need').value,
-        impact:$('ref1Impact').value,
-        intro:$('ref1Intro').value,
-        check:$('ref1Check').value,
-        review:$('ref1Review').value,
-        impactDate:$('ref1ImpactDate').value
-      },
-      {
-        provider:$('ref2Provider').value,
-        need:$('ref2Need').value,
-        impact:$('ref2Impact').value,
-        intro:$('ref2Intro').value,
-        check:$('ref2Check').value,
-        review:$('ref2Review').value,
-        impactDate:$('ref2ImpactDate').value
-      },
-      {
-        provider:$('ref3Provider').value,
-        need:$('ref3Need').value,
-        impact:$('ref3Impact').value,
-        intro:$('ref3Intro').value,
-        check:$('ref3Check').value,
-        review:$('ref3Review').value,
-        impactDate:$('ref3ImpactDate').value
-      }
+      {provider:$('ref1Provider').value,need:$('ref1Need').value,impact:$('ref1Impact').value,intro:$('ref1Intro').value,check:$('ref1Check').value,review:$('ref1Review').value,impactDate:$('ref1ImpactDate').value},
+      {provider:$('ref2Provider').value,need:$('ref2Need').value,impact:$('ref2Impact').value,intro:$('ref2Intro').value,check:$('ref2Check').value,review:$('ref2Review').value,impactDate:$('ref2ImpactDate').value},
+      {provider:$('ref3Provider').value,need:$('ref3Need').value,impact:$('ref3Impact').value,intro:$('ref3Intro').value,check:$('ref3Check').value,review:$('ref3Review').value,impactDate:$('ref3ImpactDate').value}
     ]
   };
+}
+function exportPlan(){
+  const data=getFormData();
+  const rawName=(data.bizName && data.bizName.trim()) ? data.bizName.trim() : 'client';
+  let safe=rawName.replace(/[^a-z0-9\-]+/gi,'-').replace(/-+/g,'-').replace(/^-|-$/g,'').toLowerCase();
+  const filename=safe + '-action-plan.json';
+  const json=JSON.stringify(data,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* import plan */
+function importPlanFile(file){
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      setFormData(data);
+    }catch(err){
+      alert('Could not read plan file.');
+    }
+  };
+  reader.readAsText(file);
 }
 function setFormData(data){
   if(!data) return;
@@ -1107,11 +904,7 @@ function setFormData(data){
   $('contactPhone').value=data.contactPhone||'';
   $('sector').value=data.sector||'';
   $('sectorOther').value=data.sectorOther||'';
-  if(data.sector==='Other'){
-    $('sectorOtherWrap').style.display='block';
-  }else{
-    $('sectorOtherWrap').style.display='none';
-  }
+  toggleSectorOther();
   $('employees').value=data.employees||'';
   $('planDate').value=data.planDate||'';
   $('q1').value=data.q1||'';
@@ -1121,7 +914,8 @@ function setFormData(data){
   $('q5').value=data.q5||'';
   $('q6').value=data.q6||'';
   $('barrierOther').value=data.barrierOther||'';
-  $('barrierOtherResp').value=data.barrierOtherResp||'';
+  $('barrierResponse').value=data.barrierResponse||'';
+  handleBarrierVisibility();
   $('supportSummary').value=data.supportSummary||'';
   (data.referrals||[]).forEach((r,i)=>{
     const idx=i+1;
@@ -1132,8 +926,8 @@ function setFormData(data){
     $('ref'+idx+'Check').value=r.check||'';
     $('ref'+idx+'Review').value=r.review||'';
     $('ref'+idx+'ImpactDate').value=r.impactDate||'';
-    validateDates(idx);
   });
+  /* re-highlight diagnostic cards */
   ['q1','q2','q3','q4','q5','q6'].forEach(id=>{
     const val=$(id).value;
     const group=$(id+'Group');
@@ -1149,52 +943,54 @@ function setFormData(data){
       });
     }
   });
-  if(($('q6').value||'')==='Other Bespoke response.'){
-    toggleBarrierExtras(true);
-  }else{
-    toggleBarrierExtras(false);
-  }
-  validateEmail();
-  validatePhone();
   renderPreview();
 }
-function exportPlan(){
-  const data=getFormData();
-  const rawName=(data.bizName && data.bizName.trim()) ? data.bizName.trim() : 'client';
-  let safe=rawName
-    .replace(/[^a-z0-9\-]+/gi,'-')
-    .replace(/-+/g,'-')
-    .replace(/^-|-$/g,'')
-    .toLowerCase();
-  const filename=safe + '-action-plan.json';
-  const json=JSON.stringify(data,null,2);
-  const blob=new Blob([json],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;
-  a.download=filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+
+/* date validation helper */
+function validateReferralDates(n){
+  const intro=$('ref'+n+'Intro');
+  const check=$('ref'+n+'Check');
+  const review=$('ref'+n+'Review');
+  const impact=$('ref'+n+'ImpactDate');
+  const msg=$('ref'+n+'DateMsg');
+
+  const today=new Date();
+  today.setHours(0,0,0,0);
+
+  function toDate(val){ if(!val) return null; const d=new Date(val); d.setHours(0,0,0,0); return d; }
+
+  const dIntro=toDate(intro.value);
+  const dCheck=toDate(check.value);
+  const dReview=toDate(review.value);
+  const dImpact=toDate(impact.value);
+
+  msg.textContent='';
+
+  if(dIntro && dIntro<today){
+    intro.value=today.toISOString().slice(0,10);
+    msg.textContent='Intro date cannot be before today.';
+  }
+  if(dCheck){
+    if(dCheck<today) { check.value=today.toISOString().slice(0,10); msg.textContent='Check-in cannot be before today.'; }
+    if(dIntro && dCheck<dIntro){ check.value=intro.value; msg.textContent='Check-in cannot be before intro date.'; }
+  }
+  if(dReview){
+    if(dReview<today){ review.value=today.toISOString().slice(0,10); msg.textContent='Review cannot be before today.'; }
+    if(dCheck && dReview<dCheck){ review.value=check.value; msg.textContent='Review cannot be before check-in.'; }
+    if(dIntro && dReview<dIntro){ review.value=intro.value; msg.textContent='Review cannot be before intro.'; }
+  }
+  if(dImpact){
+    if(dImpact<today){ impact.value=today.toISOString().slice(0,10); msg.textContent='Impact cannot be before today.'; }
+    if(dReview && dImpact<dReview){ impact.value=review.value; msg.textContent='Impact cannot be before review.'; }
+    if(dCheck && dImpact<dCheck){ impact.value=check.value; msg.textContent='Impact cannot be before check-in.'; }
+    if(dIntro && dImpact<dIntro){ impact.value=intro.value; msg.textContent='Impact cannot be before intro.'; }
+  }
 }
-function importPlanFile(file){
-  if(!file) return;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    try{
-      const data=JSON.parse(e.target.result);
-      setFormData(data);
-    }catch(err){
-      alert('Could not read plan file.');
-    }
-  };
-  reader.readAsText(file);
-}
+
+/* save as PDF */
 function saveAsPdf() {
   const html = emailHTML();
   const w = window.open('', '_blank', 'noopener,noreferrer');
-
   if (w) {
     w.document.open();
     w.document.write(`
@@ -1220,45 +1016,6 @@ function saveAsPdf() {
         w.print();
       }, 150);
     };
-  } else {
-    const iframe = document.createElement('iframe');
-    iframe.style.position = 'fixed';
-    iframe.style.right = '0';
-    iframe.style.bottom = '0';
-    iframe.style.width = '0';
-    iframe.style.height = '0';
-    iframe.style.border = '0';
-    document.body.appendChild(iframe);
-
-    const doc = iframe.contentWindow.document;
-    doc.open();
-    doc.write(`
-      <!doctype html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <title>Innovation Action Plan</title>
-        <style>
-          @page { margin: 12mm; }
-          body { margin:0; font-family:"Aptos","Segoe UI",Arial,sans-serif; }
-        </style>
-      </head>
-      <body>
-        ${html}
-      </body>
-      </html>
-    `);
-    doc.close();
-
-    iframe.onload = function () {
-      setTimeout(function () {
-        iframe.contentWindow.focus();
-        iframe.contentWindow.print();
-        setTimeout(function () {
-          document.body.removeChild(iframe);
-        }, 1000);
-      }, 150);
-    };
   }
 }
 
@@ -1267,7 +1024,6 @@ renderRadioGroup('Q1 Ideas & Innovation','q1Group','q1');
 renderRadioGroup('Q2 Innovation Strategy','q2Group','q2');
 renderRadioGroup('Q3 AI Adoption','q3Group','q3');
 renderRadioGroup('Q4 Digital Strategy','q4Group','q4');
-/* keep correct key for Q5 */
 renderRadioGroup('Q5 Green Investment','q5Group','q5');
 renderRadioGroup('Q6 Biggest Barrier','q6Group','q6');
 fillReferralSelects();
