@@ -1,0 +1,1278 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Innovation Action Plan – Builder</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body{
+      margin:0;
+      font-family:"Aptos","Segoe UI",Arial,sans-serif;
+      background:#f3f4f6;
+      /* no global horizontal scroll needed now */
+      overflow-x:hidden;
+    }
+    .wrap{
+      display:flex;
+      gap:16px;
+      padding:16px;
+      height:100vh;
+      box-sizing:border-box;
+      /* no fixed min-width, let it stack on small screens */
+    }
+    .panel{
+      background:#fff;
+      border:1px solid #e5e7eb;
+      border-radius:12px;
+      padding:16px;
+      flex:1;
+      box-shadow:0 1px 2px rgba(0,0,0,.05);
+      display:flex;
+      flex-direction:column;
+      max-height:100%;
+      min-width:360px;
+    }
+    .panel h2{margin-top:0;font-size:16px;}
+    .panel-scroll{overflow-y:auto;flex:1;min-height:0;}
+    fieldset{border:1px solid #e5e7eb;border-radius:10px;margin-bottom:16px;}
+    legend{padding:0 6px;font-weight:600;color:#374151;font-size:12px;}
+    label{display:block;font-size:12px;color:#374151;margin-top:8px;}
+    input,select,textarea{
+      width:100%;
+      padding:6px 7px;
+      border:1px solid #d1d5db;
+      border-radius:8px;
+      font-size:13px;
+      font-family:"Aptos","Segoe UI",Arial,sans-serif;
+      background:#fff;
+    }
+    textarea{min-height:68px;}
+    .row{display:grid;gap:8px;grid-template-columns:repeat(2,minmax(0,1fr));}
+    .row3{display:grid;gap:8px;grid-template-columns:repeat(3,minmax(0,1fr));}
+    .btn{
+      display:inline-block;
+      background:#111827;
+      color:#fff;
+      border:none;
+      border-radius:9px;
+      padding:8px 13px;
+      cursor:pointer;
+      font-weight:600;
+      font-size:13px;
+      margin-right:6px;
+      margin-top:4px;
+    }
+    .smallbtn{
+      display:inline-block;
+      background:#2563eb;
+      color:#fff;
+      border:none;
+      border-radius:7px;
+      padding:5px 9px;
+      cursor:pointer;
+      font-size:12px;
+      margin-bottom:8px;
+    }
+    .previewbox{
+      border:1px solid #e5e7eb;
+      border-radius:10px;
+      background:#fff;
+      min-height:400px;
+    }
+    .diag-section>label{margin-top:4px;margin-bottom:0;line-height:1;}
+    .diag-section .radio-group{margin:0 0 4px 0;}
+    .radio-group{display:flex;flex-wrap:wrap;gap:4px;}
+    .option-card{
+      width:140px;
+      min-height:56px;
+      border:1px solid #d1d5db;
+      border-radius:10px;
+      padding:3px 5px 4px 5px;
+      background:#fff;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      text-align:center;
+      cursor:pointer;
+      transition:box-shadow .12s ease;
+    }
+    .option-card:hover{box-shadow:0 1px 4px rgba(0,0,0,.12);}
+    .option-card.selected{border-color:#2563eb;background:#edf3ff;}
+    .option-card input{margin-bottom:2px;}
+    .option-text{font-size:7pt;line-height:1.2;}
+    #q6Group{gap:3px 3px;}
+    .internal-input{background:#f3f4f6;}
+    #exportHelp{margin-top:6px;font-size:11px;color:#4b5563;line-height:1.35;}
+    .q6-extra{display:none;}
+    .error-hint{
+      font-size:11px;
+      color:#b91c1c;
+      margin-top:3px;
+    }
+    @media(max-width:1000px){
+      .wrap{flex-direction:column;height:auto;}
+      .panel{max-height:none;min-width:0;}
+      .panel-scroll{max-height:none;}
+      .row,.row3{grid-template-columns:1fr;}
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <!-- LEFT (builder) -->
+  <div class="panel">
+    <h2>Action Plan – Builder</h2>
+    <div class="panel-scroll">
+      <!-- one-time setup -->
+      <fieldset>
+        <legend>My details (one-time setup)</legend>
+        <div class="row">
+          <div>
+            <label>My Innovation hub / college
+              <input id="myCollege" placeholder="e.g. Bury College Innovation Hub" />
+            </label>
+          </div>
+          <div>
+            <label>My BIA / Advisor
+              <input id="myBia" placeholder="e.g. Sam Ahmed" />
+            </label>
+          </div>
+        </div>
+        <button class="smallbtn" onclick="saveMyDefaults()">Save my defaults</button>
+        <span id="saveStatus" style="font-size:11px;color:#059669;margin-left:6px;"></span>
+      </fieldset>
+
+      <!-- internal -->
+      <fieldset>
+        <legend>Internal (auto-filled from my defaults)</legend>
+        <div class="row">
+          <div>
+            <label>Innovation hub / college
+              <input id="college" class="internal-input" oninput="renderPreview()" />
+            </label>
+          </div>
+          <div>
+            <label>BIA / Advisor
+              <input id="advisor" class="internal-input" oninput="renderPreview()" />
+            </label>
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- client info -->
+      <fieldset>
+        <legend>Business details (client)</legend>
+        <div class="row">
+          <div><label>Business name<input id="bizName" oninput="renderPreview()" /></label></div>
+          <div><label>Business contact<input id="contactName" oninput="renderPreview()" /></label></div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Contact email
+              <input id="contactEmail" type="email" onblur="validateEmail()" oninput="renderPreview()" />
+            </label>
+            <div id="contactEmailErr" class="error-hint" style="display:none;">Please enter a valid email (e.g. name@company.com)</div>
+          </div>
+          <div>
+            <label>Phone
+              <input id="contactPhone" onblur="validatePhone()" oninput="renderPreview()" />
+            </label>
+            <div id="contactPhoneErr" class="error-hint" style="display:none;">Enter a valid UK number (e.g. 0161..., 07...)</div>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Sector
+              <select id="sector" onchange="handleSectorChange();renderPreview();">
+                <option value="">— select —</option>
+                <option>Accommodation / Food</option>
+                <option>Administrative &amp; Support</option>
+                <option>Agriculture Forestry &amp; Fishing</option>
+                <option>Arts Entertainment &amp; Recreation</option>
+                <option>Construction</option>
+                <option>Education</option>
+                <option>Financial / Insurance</option>
+                <option>Healthcare</option>
+                <option>Manufacturing</option>
+                <option>Mining / Quarrying</option>
+                <option>Professional &amp; Technical Services</option>
+                <option>Public Administration</option>
+                <option>Real Estate</option>
+                <option>Retail &amp; Wholesale Trade</option>
+                <option>Tech &amp; Comms</option>
+                <option>Transportation</option>
+                <option>Utilities</option>
+                <option value="Other">Other</option>
+              </select>
+            </label>
+            <label id="sectorOtherWrap" style="display:none;margin-top:4px;">Sector (Other)
+              <input id="sectorOther" maxlength="20" oninput="renderPreview()" placeholder="max 20 chars" />
+            </label>
+          </div>
+          <div>
+            <label>No. of employees
+              <select id="employees" onchange="renderPreview()">
+                <option value="">— select —</option>
+                <option>1 (sole trader)</option>
+                <option>2-4</option>
+                <option>5-9</option>
+                <option>10-49</option>
+                <option>50-99</option>
+                <option>100-249</option>
+                <option>>250</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <label>Date<input id="planDate" type="date" oninput="renderPreview()" /></label>
+      </fieldset>
+
+      <!-- diagnostic -->
+      <fieldset class="diag-section">
+        <legend>Diagnostic (auto-fills email)</legend>
+        <label>Q1 – Ideas & Innovation</label>
+        <div id="q1Group" class="radio-group"></div>
+
+        <label>Q2 – Innovation Strategy</label>
+        <div id="q2Group" class="radio-group"></div>
+
+        <label>Q3 – AI Adoption</label>
+        <div id="q3Group" class="radio-group"></div>
+
+        <label>Q4 – Digital Strategy</label>
+        <div id="q4Group" class="radio-group"></div>
+
+        <label>Q5 – Green / Low-carbon investment</label>
+        <div id="q5Group" class="radio-group"></div>
+
+        <label>Q6 – Biggest Barrier</label>
+        <div id="q6Group" class="radio-group"></div>
+
+        <!-- hidden holders -->
+        <input type="hidden" id="q1" />
+        <input type="hidden" id="q2" />
+        <input type="hidden" id="q3" />
+        <input type="hidden" id="q4" />
+        <input type="hidden" id="q5" />
+        <input type="hidden" id="q6" />
+
+        <!-- show only if Q6 = Other -->
+        <label id="barrierOtherWrap" class="q6-extra" style="margin-top:4px;">Barrier (if Other)
+          <input id="barrierOther" maxlength="70" oninput="renderPreview()" placeholder="Enter the specific barrier the business has identified" />
+        </label>
+        <label id="barrierOtherRespWrap" class="q6-extra" style="margin-top:4px;">Response (if Other)
+          <input id="barrierOtherResp" maxlength="120" oninput="renderPreview()" placeholder="Short note with options to address the barrier – optional" />
+        </label>
+      </fieldset>
+
+      <!-- summary -->
+      <fieldset>
+        <legend>Business support summary</legend>
+        <label>Summary / narrative
+          <textarea id="supportSummary" oninput="renderPreview()" placeholder="Short description of the business and points of discussion/exploration"></textarea>
+        </label>
+      </fieldset>
+
+      <!-- referrals -->
+      <fieldset>
+        <legend>Key referrals (up to 3)</legend>
+        <button class="smallbtn" onclick="document.getElementById('refCsv').click()">Load referral list (CSV)</button>
+        <input id="refCsv" type="file" accept=".csv" style="display:none" onchange="handleReferralCsv(this.files[0])" />
+        <div class="row3">
+          <div>
+            <label>Referral 1 (Provider)
+              <select id="ref1Provider" onchange="renderPreview()">
+                <option value="">— please import entries from Referral Partners.csv —</option>
+              </select>
+            </label>
+            <label>Business need
+              <textarea id="ref1Need" oninput="renderPreview()" placeholder="What is the specific business need that this referral will address?"></textarea>
+            </label>
+            <label>Intended impact
+              <textarea id="ref1Impact" oninput="renderPreview()" placeholder="What tangible positive impact might this referral have for the business?"></textarea>
+            </label>
+            <label>Intro date
+              <input id="ref1Intro" type="date" oninput="validateDates(1);renderPreview()" />
+            </label>
+            <div id="ref1IntroErr" class="error-hint" style="display:none;">Intro date cannot be before today.</div>
+            <label>Check-in date
+              <input id="ref1Check" type="date" oninput="validateDates(1);renderPreview()" />
+            </label>
+            <div id="ref1CheckErr" class="error-hint" style="display:none;">Check-in cannot be before intro or today.</div>
+            <label>Review date
+              <input id="ref1Review" type="date" oninput="validateDates(1);renderPreview()" />
+            </label>
+            <div id="ref1ReviewErr" class="error-hint" style="display:none;">Review cannot be before check-in.</div>
+            <label>Impact date
+              <input id="ref1ImpactDate" type="date" oninput="validateDates(1);renderPreview()" />
+            </label>
+            <div id="ref1ImpactDateErr" class="error-hint" style="display:none;">Impact cannot be before review.</div>
+          </div>
+          <div>
+            <label>Referral 2 (Provider)
+              <select id="ref2Provider" onchange="renderPreview()">
+                <option value="">— please import entries from Referral Partners.csv —</option>
+              </select>
+            </label>
+            <label>Business need
+              <textarea id="ref2Need" oninput="renderPreview()" placeholder="What is the specific business need that this referral will address?"></textarea>
+            </label>
+            <label>Intended impact
+              <textarea id="ref2Impact" oninput="renderPreview()" placeholder="What tangible positive impact might this referral have for the business?"></textarea>
+            </label>
+            <label>Intro date
+              <input id="ref2Intro" type="date" oninput="validateDates(2);renderPreview()" />
+            </label>
+            <div id="ref2IntroErr" class="error-hint" style="display:none;">Intro date cannot be before today.</div>
+            <label>Check-in date
+              <input id="ref2Check" type="date" oninput="validateDates(2);renderPreview()" />
+            </label>
+            <div id="ref2CheckErr" class="error-hint" style="display:none;">Check-in cannot be before intro or today.</div>
+            <label>Review date
+              <input id="ref2Review" type="date" oninput="validateDates(2);renderPreview()" />
+            </label>
+            <div id="ref2ReviewErr" class="error-hint" style="display:none;">Review cannot be before check-in.</div>
+            <label>Impact date
+              <input id="ref2ImpactDate" type="date" oninput="validateDates(2);renderPreview()" />
+            </label>
+            <div id="ref2ImpactDateErr" class="error-hint" style="display:none;">Impact cannot be before review.</div>
+          </div>
+          <div>
+            <label>Referral 3 (Provider)
+              <select id="ref3Provider" onchange="renderPreview()">
+                <option value="">— please import entries from Referral Partners.csv —</option>
+              </select>
+            </label>
+            <label>Business need
+              <textarea id="ref3Need" oninput="renderPreview()" placeholder="What is the specific business need that this referral will address?"></textarea>
+            </label>
+            <label>Intended impact
+              <textarea id="ref3Impact" oninput="renderPreview()" placeholder="What tangible positive impact might this referral have for the business?"></textarea>
+            </label>
+            <label>Intro date
+              <input id="ref3Intro" type="date" oninput="validateDates(3);renderPreview()" />
+            </label>
+            <div id="ref3IntroErr" class="error-hint" style="display:none;">Intro date cannot be before today.</div>
+            <label>Check-in date
+              <input id="ref3Check" type="date" oninput="validateDates(3);renderPreview()" />
+            </label>
+            <div id="ref3CheckErr" class="error-hint" style="display:none;">Check-in cannot be before intro or today.</div>
+            <label>Review date
+              <input id="ref3Review" type="date" oninput="validateDates(3);renderPreview()" />
+            </label>
+            <div id="ref3ReviewErr" class="error-hint" style="display:none;">Review cannot be before check-in.</div>
+            <label>Impact date
+              <input id="ref3ImpactDate" type="date" oninput="validateDates(3);renderPreview()" />
+            </label>
+            <div id="ref3ImpactDateErr" class="error-hint" style="display:none;">Impact cannot be before review.</div>
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- actions -->
+      <button class="btn" onclick="copyRenderedEmail()">Copy to email</button>
+      <button class="btn" onclick="exportPlan()">Export plan</button>
+      <button class="btn" onclick="document.getElementById('importPlanFile').click()">Import plan</button>
+      <button class="btn" onclick="saveAsPdf()">Save as PDF</button>
+      <input id="importPlanFile" type="file" accept=".json,application/json" style="display:none" onchange="importPlanFile(this.files[0])" />
+      <div id="exportHelp">
+        <p><strong>Export plan:</strong> downloads a plan file (e.g. <em>client-name-action-plan.json</em>) to your browser’s default downloads folder. Move it to your “Action Plans” folder if needed.</p>
+        <p><strong>Import plan:</strong> choose a plan file you saved earlier and this page will refill.</p>
+        <p><strong>Save as PDF:</strong> opens a print-style view – choose “Save as PDF”.</p>
+        <p><strong>Copy to email:</strong> copies the formatted plan – open Outlook and paste.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT (preview) -->
+  <div class="panel">
+    <h2>Client email preview</h2>
+    <div class="panel-scroll">
+      <div id="emailPreview" class="previewbox"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const BRAND_PURPLE='#A02B93',
+      HEADER_BLUE='#83CAEB',
+      KEYREF_HEADER='#45B0E1',
+      PROVIDER_HIGHLIGHT='#FFF455',
+      BARRIER_GREY='#E5E7EB',
+      CLIENT_SHADE='#F3F4F6', /* lighter for client cells */
+      INTERNAL_SHADE='#E5E7EB'; /* keep internal a bit darker */
+const STEP1='#0C567E', STEP2='#05799D', STEP3='#0C9BB1', STEP4='#2AB2D6', STEP5='#45B0E1';
+const RAG_TO_HEX={Red:'#FF0000',Amber:'#FFC000',Green:'#00B050',Grey:'#E5E7EB'};
+const $=id=>document.getElementById(id);
+
+/* start empty – CSV only */
+let referralDirectory=[];
+
+function loadMyDefaults(){
+  const c=localStorage.getItem('iap_my_college')||'';
+  const b=localStorage.getItem('iap_my_bia')||'';
+  $('myCollege').value=c;
+  $('myBia').value=b;
+  if(!$('college').value) $('college').value=c;
+  if(!$('advisor').value) $('advisor').value=b;
+  const d=$('planDate');
+  if(d && !d.value){
+    const today=new Date().toISOString().slice(0,10);
+    d.value=today;
+  }
+}
+function saveMyDefaults(){
+  const c=$('myCollege').value||'';
+  const b=$('myBia').value||'';
+  localStorage.setItem('iap_my_college',c);
+  localStorage.setItem('iap_my_bia',b);
+  $('college').value=c;
+  $('advisor').value=b;
+  $('saveStatus').textContent='Saved.';
+  renderPreview();
+  setTimeout(()=>{$('saveStatus').textContent='';},2500);
+}
+
+const rubric=[
+  { q:'Q1 Ideas & Innovation', option:'Your business is not currently encouraging or implementing new ideas.', our:'Your business is not currently encouraging or implementing new ideas.', cons:'Without encouraging ideas, opportunities to improve efficiency, services, and competitiveness are easily lost. Ask whether this limits growth and adaptability within your business.', rag:'Red' },
+  { q:'Q1 Ideas & Innovation', option:'Your business sometimes encourages and implements new ideas.', our:'Your business sometimes encourages and implements new ideas.', cons:'Think about what causes irregularity, ownership, process, or follow-through. Trialling light-touch routines such as quarterly reviews or a nominated lead could help ideas gain momentum.', rag:'Amber' },
+  { q:'Q1 Ideas & Innovation', option:'Your business often encourages new ideas, but they are not always acted on.', our:'Your business often encourages new ideas, but they are not always acted on.', cons:'Question why some ideas stall — prioritisation, capacity, or decision-making. Testing pilot projects or clearer pathways could move more ideas into delivery.', rag:'Amber' },
+  { q:'Q1 Ideas & Innovation', option:'Your business regularly encourages and implements new ideas.', our:'Your business regularly encourages and implements new ideas.', cons:'Innovation is clearly part of your culture. Look at how successes are shared and whether all teams are equally involved to build wider momentum.', rag:'Green' },
+
+  { q:'Q2 Innovation Strategy', option:'Your business has an innovation strategy or plan.', our:'Your business has an innovation strategy or plan.', cons:'Review whether the strategy is widely understood and embedded across teams. Updating it regularly can keep it relevant to new challenges and opportunities.', rag:'Green' },
+  { q:'Q2 Innovation Strategy', option:'Your business is not currently working to an innovation strategy or plan.', our:'Your business is not currently working to an innovation strategy or plan.', cons:'Without a plan, improvements to processes, products, and services are often fragmented and harder to scale. Consider whether this undermines competitiveness, resilience, or profitability.', rag:'Red' },
+  { q:'Q2 Innovation Strategy', option:'It is unclear whether your business has an innovation strategy or plan.', our:'It is unclear whether your business has an innovation strategy or plan.', cons:'If activity is happening informally, it may lack visibility or coordination. Ask whether this reduces impact and limits progress across the business.', rag:'Amber' },
+
+  { q:'Q3 AI Adoption', option:'Your business is not currently using AI tools.', our:'Your business is not currently using AI tools.', cons:'AI is increasingly central to productivity and customer value. Question whether avoiding it leaves you at a disadvantage compared with competitors.', rag:'Red' },
+  { q:'Q3 AI Adoption', option:'Your business is making initial use of AI tools.', our:'Your business is making initial use of AI tools.', cons:'Think about what has influenced adoption so far — time, skills, or awareness. Identifying use cases such as admin or customer support could help build confidence and value.', rag:'Amber' },
+  { q:'Q3 AI Adoption', option:'Your business is making significant use of AI tools.', our:'Your business is making significant use of AI tools.', cons:'Review which applications deliver the greatest benefits. Benchmarking against peers or trialling advanced tools can help maintain momentum.', rag:'Green' },
+
+  { q:'Q4 Digital Strategy', option:'Your business has a clear digital strategy that all staff are aware of.', our:'Your business has a clear digital strategy that all staff are aware of.', cons:'Review how regularly the plan is tested against new technologies and workforce skills to ensure it remains future-ready.', rag:'Green' },
+  { q:'Q4 Digital Strategy', option:'Your business has a digital strategy, but it is mainly understood at senior management level.', our:'Your business has a digital strategy, but it is mainly understood at senior management level.', cons:'Question why awareness is limited outside leadership. Sharing the plan more widely through updates or staff champions can strengthen adoption.', rag:'Amber' },
+  { q:'Q4 Digital Strategy', option:'Your business is not currently working to a digital strategy, but is exploring the need for one.', our:'Your business is not currently working to a digital strategy, but is exploring the need for one.', cons:'Digital planning is critical for efficiency and competitiveness. Consider whether delaying a structured approach risks lost opportunities.', rag:'Amber' },
+  { q:'Q4 Digital Strategy', option:'It is unclear whether your business has a digital strategy.', our:'It is unclear whether your business has a digital strategy.', cons:'Uncertainty over digital direction can weaken resilience. Think about whether current systems are fit for your future needs.', rag:'Amber' },
+
+  { q:'Q5 Green Investment', option:'Your business is not currently investing in green technologies.', our:'Your business is not currently investing in green technologies.', cons:'Green investment can reduce costs, improve efficiency, and strengthen market position. Ask whether not acting could affect long-term resilience and compliance with future regulations.', rag:'Red' },
+  { q:'Q5 Green Investment', option:'Your business has made an initial investment in green technologies and is looking for more guidance on how to use them effectively.', our:'Your business has made an initial investment in green technologies and is looking for more guidance on how to use them effectively.', cons:'Think about where investment so far has delivered benefits and where gaps remain. Seeking advice or case studies could help identify how to scale activity for greater impact.', rag:'Amber' },
+  { q:'Q5 Green Investment', option:'Your business has made a significant investment in green technologies and can share examples of how this has helped.', our:'Your business has made a significant investment in green technologies and can share examples of how this has helped.', cons:'Review which investments have delivered the most value and whether they could be built upon. Sharing best practice within your sector could also strengthen your reputation.', rag:'Green' },
+
+  { q:'Q6 Biggest Barrier', option:'You have identified technical know-how as a key barrier to innovation.', our:'You have identified technical know-how as a key barrier to innovation.', cons:'This can limit confidence in new approaches. Targeted training or specialist advice may help build capability. Your Business Innovation Advisor can signpost to relevant skills programmes and external expertise.', rag:'Grey' },
+  { q:'Q6 Biggest Barrier', option:'You have identified team capacity as a key barrier to innovation.', our:'You have identified team capacity as a key barrier to innovation.', cons:'Limited capacity can hold back progress. Apprenticeships, collaborations, or partnerships could add the resource you need. Your Business Innovation Advisor can highlight schemes and partners that provide additional capacity.', rag:'Grey' },
+  { q:'Q6 Biggest Barrier', option:'You have identified funding as a key barrier to innovation.', our:'You have identified funding as a key barrier to innovation.', cons:'Finance concerns can restrict opportunities. Innovation grants, pilot projects, or collaborative bids are often available to reduce risk. Your Business Innovation Advisor can provide guidance on funding routes and referral to relevant schemes.', rag:'Grey' },
+  { q:'Q6 Biggest Barrier', option:'You have identified lack of strategy as a key barrier to innovation.', our:'You have identified lack of strategy as a key barrier to innovation.', cons:'Without a clear plan, activity can lack focus. Exploring simple strategy frameworks or facilitated planning support could provide direction. Your Business Innovation Advisor can suggest tools and referrals to strategy support providers.', rag:'Grey' },
+  { q:'Q6 Biggest Barrier', option:'You have identified lack of awareness as a key barrier to innovation.', our:'You have identified lack of awareness as a key barrier to innovation.', cons:'Limited visibility of opportunities can hold you back. Sector networks, peer examples, and case studies could provide inspiration. Your Business Innovation Advisor can connect you with networks and practical examples relevant to your sector.', rag:'Grey' },
+  { q:'Q6 Biggest Barrier', option:'You have identified time as a key barrier to innovation.', our:'You have identified time as a key barrier to innovation.', cons:'Competing priorities make innovation difficult to prioritise. Starting with short, focused projects or time-limited trials can demonstrate value without major disruption.', rag:'Grey' },
+  { q:'Q6 Biggest Barrier', option:'You have identified another barrier to innovation.', our:'You have identified another barrier to innovation.', cons:'Understanding the barrier in more depth will help point to the right kind of support, whether technical, financial, or strategic.', rag:'Grey' },
+  { q:'Q6 Biggest Barrier', option:'Other Bespoke response.', our:'Other Bespoke response.', cons:'We can explore this in more depth and signpost tailored support.', rag:'Grey' }
+];
+
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[m]));
+}
+function handleSectorChange(){
+  const sel=$('sector').value;
+  const wrap=$('sectorOtherWrap');
+  if(sel==='Other'){
+    wrap.style.display='block';
+  }else{
+    wrap.style.display='none';
+    $('sectorOther').value='';
+  }
+}
+function toggleBarrierExtras(show){
+  const w1=$('barrierOtherWrap');
+  const w2=$('barrierOtherRespWrap');
+  if(show){
+    w1.style.display='block';
+    w2.style.display='block';
+  }else{
+    w1.style.display='none';
+    w2.style.display='none';
+    $('barrierOther').value='';
+    $('barrierOtherResp').value='';
+  }
+}
+function renderRadioGroup(qName,containerId,inputId){
+  const container=$(containerId);
+  const options=rubric.filter(r=>r.q===qName).map(r=>r.option);
+  container.innerHTML='';
+  options.forEach(opt=>{
+    const card=document.createElement('label');
+    card.className='option-card';
+    const input=document.createElement('input');
+    input.type='radio';
+    input.name=inputId;
+    input.value=opt;
+    const text=document.createElement('div');
+    text.className='option-text';
+    text.textContent=opt;
+    input.onchange=()=>{
+      [...container.children].forEach(c=>c.classList.remove('selected'));
+      card.classList.add('selected');
+      $(inputId).value=opt;
+      if(inputId==='q6'){
+        if(opt==='Other Bespoke response.'){ toggleBarrierExtras(true); }
+        else{ toggleBarrierExtras(false); }
+      }
+      renderPreview();
+    };
+    card.onclick=()=>{input.checked=true;input.onchange();};
+    card.appendChild(input);
+    card.appendChild(text);
+    container.appendChild(card);
+  });
+}
+
+/* CSV parsing – tolerant */
+function parseSimpleCsv(text){
+  const rows=[];
+  let cur=[];
+  let field='';
+  let inQuotes=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    const next=text[i+1];
+    if(inQuotes){
+      if(ch==='"' && next==='"'){ field+='"'; i++; }
+      else if(ch==='"'){ inQuotes=false; }
+      else{ field+=ch; }
+    }else{
+      if(ch==='"'){ inQuotes=true; }
+      else if(ch===','){ cur.push(field.trim()); field=''; }
+      else if(ch==='\r'){ }
+      else if(ch==='\n'){ cur.push(field.trim()); rows.push(cur); cur=[]; field=''; }
+      else{ field+=ch; }
+    }
+  }
+  if(field.length || cur.length){
+    cur.push(field.trim());
+    rows.push(cur);
+  }
+  return rows.filter(r=>r.some(c=>c!==''));
+}
+function processReferralCsvText(text){
+  const rows=parseSimpleCsv(text);
+  if(!rows.length) return false;
+  rows[0][0]=(rows[0][0]||'').replace(/^\uFEFF/,'');
+  const header=rows[0].map(h=>(h||'').trim());
+  const pIdx=header.findIndex(h=>h.toLowerCase()==='provider');
+  const oIdx=header.findIndex(h=>h.toLowerCase()==='outline');
+  if(pIdx===-1 || oIdx===-1) return false;
+  let added=0;
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i];
+    const provider=(r[pIdx]||'').trim();
+    const outline=(r[oIdx]||'').trim();
+    if(!provider) continue;
+    referralDirectory.push({provider,outline});
+    added++;
+  }
+  fillReferralSelects();
+  renderPreview();
+  if(added){ alert('Loaded '+added+' referral(s) from CSV.'); }
+  return true;
+}
+function handleReferralCsv(file){
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const ok=processReferralCsvText(e.target.result);
+    if(!ok){
+      const reader2=new FileReader();
+      reader2.onload=e2=>{
+        const ok2=processReferralCsvText(e2.target.result);
+        if(!ok2) alert('CSV must have headers: Provider,Outline');
+      };
+      reader2.readAsText(file,'ISO-8859-1');
+    }
+  };
+  reader.readAsText(file);
+}
+function fillReferralSelects(){
+  let html='';
+  if(referralDirectory.length===0){
+    html='<option value="">— please import entries from Referral Partners.csv —</option>';
+  }else{
+    html='<option value="">— none —</option>'+referralDirectory.map(r=>`<option value="${r.provider}">${r.provider}</option>`).join('');
+  }
+  ['ref1Provider','ref2Provider','ref3Provider'].forEach(id=>{$(id).innerHTML=html;});
+}
+function lookupRubric(q,opt){
+  if(!opt) return null;
+  return rubric.find(r=>r.q===q && r.option===opt) || null;
+}
+
+function buildDiagnosticTable(){
+  const ideas=lookupRubric('Q1 Ideas & Innovation',$('q1').value);
+  const strat=lookupRubric('Q2 Innovation Strategy',$('q2').value);
+  const ai=lookupRubric('Q3 AI Adoption',$('q3').value);
+  const digital=lookupRubric('Q4 Digital Strategy',$('q4').value);
+  const green=lookupRubric('Q5 Green Investment',$('q5').value);
+  const barrier=lookupRubric('Q6 Biggest Barrier',$('q6').value);
+
+  const barrierOther=($('barrierOther').value||'').slice(0,70);
+  const barrierOtherResp=($('barrierOtherResp').value||'').slice(0,120);
+
+  const descWidth='80px';
+  const colWidth='93px';
+
+  const cols=[
+    { title:'💡 Ideas & Innovation',  data:ideas,   forceGrey:false },
+    { title:'🧭 Innovation Strategy', data:strat,   forceGrey:false },
+    { title:'🤖 AI Adoption',         data:ai,      forceGrey:false },
+    { title:'💻 Digital Strategy',    data:digital, forceGrey:false },
+    { title:'🌿 Green Investment',    data:green,   forceGrey:false },
+    { title:'⚠️ Barriers',            data:barrier, forceGrey:true  }
+  ];
+
+  let header=`<tr>
+    <td style="width:${descWidth};background:${BARRIER_GREY};border:1px solid #ffffff;padding:5px;font-size:11px;font-weight:bold;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Area</td>`;
+  cols.forEach(col=>{
+    const bg=col.forceGrey?BARRIER_GREY:(col.data?(RAG_TO_HEX[col.data.rag]||RAG_TO_HEX.Grey):RAG_TO_HEX.Grey);
+    const color=col.forceGrey?'#111827':'#ffffff';
+    header+=`<td style="width:${colWidth};background:${bg};border:1px solid #ffffff;padding:4px;font-size:11px;font-weight:bold;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;color:${color};mso-line-height-rule:exactly;">${col.title}</td>`;
+  });
+  header+='</tr>';
+  header+=`<tr><td colspan="7" style="height:6px;line-height:6px;font-size:0;"></td></tr>`;
+
+  let yourRow=`<tr>
+    <td style="width:${descWidth};background:${BARRIER_GREY};border:1px solid #ffffff;padding:5px;font-size:11px;font-weight:bold;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Your response</td>`;
+  cols.forEach(col=>{
+    let cellText='';
+    if(col.data){
+      if(col.forceGrey && col.data.option==='Other Bespoke response.'){
+        cellText=barrierOther || '';
+      }else{
+        cellText=col.data.our;
+      }
+    }
+    yourRow+=`<td style="width:${colWidth};background:#ffffff;border:1px solid #d1d5db;padding:4px;font-size:10px;vertical-align:top;font-family:'Aptos','Segoe UI',Arial,sans-serif;word-break:break-word;overflow-wrap:break-word;mso-line-height-rule:exactly;">${escapeHtml(cellText)}</td>`;
+  });
+  yourRow+='</tr>';
+
+  const midSpacer = `<tr><td colspan="7" style="height:6px;line-height:6px;font-size:0;"></td></tr>`;
+
+  let cons=`<tr>
+    <td style="width:${descWidth};background:${BARRIER_GREY};border:1px solid #ffffff;padding:5px;font-size:11px;font-weight:bold;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Considerations</td>`;
+  cols.forEach(col=>{
+    let t='';
+    if(col.forceGrey && col.data && col.data.option==='Other Bespoke response.'){
+      if(barrierOtherResp){
+        t=escapeHtml(barrierOtherResp);
+      }else{
+        t='We can explore this in more depth and signpost tailored support if required.';
+      }
+    }else{
+      t=col.data ? col.data.cons : '';
+    }
+    cons+=`<td style="width:${colWidth};background:#ffffff;border:1px solid #d1d5db;padding:4px;font-size:10px;line-height:1.25;vertical-align:top;word-break:break-word;overflow-wrap:break-word;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${t}</td>`;
+  });
+  cons+='</tr>';
+  const spacer = `<tr><td colspan="7" style="height:6px;line-height:6px;font-size:0;"></td></tr>`;
+
+  return `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;table-layout:fixed;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+      ${header}
+      ${yourRow}
+      ${midSpacer}
+      ${cons}
+      ${spacer}
+    </table>
+  `;
+}
+
+function buildKeyReferralsTable(){
+  const slots=[
+    {prov:'ref1Provider',need:'ref1Need',impact:'ref1Impact'},
+    {prov:'ref2Provider',need:'ref2Need',impact:'ref2Impact'},
+    {prov:'ref3Provider',need:'ref3Need',impact:'ref3Impact'}
+  ];
+  const rows=[];
+  slots.forEach(s=>{
+    const providerName=$(s.prov).value;
+    const need=$(s.need).value;
+    const impact=$(s.impact).value;
+    if(!providerName && !need && !impact) return;
+    const ref=referralDirectory.find(r=>r.provider===providerName);
+    rows.push(`
+      <tr>
+        <td style="border:1px solid #d1d5db;padding:8px;font-size:12px;width:23%;vertical-align:top;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(need)}</td>
+        <td style="border:1px solid #d1d5db;padding:8px;font-size:12px;width:19%;vertical-align:top;background:${PROVIDER_HIGHLIGHT};font-weight:bold;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${providerName?escapeHtml(providerName):''}</td>
+        <td style="border:1px solid #d1d5db;padding:8px;font-size:12px;width:33%;vertical-align:top;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${ref?escapeHtml(ref.outline):''}</td>
+        <td style="border:1px solid #d1d5db;padding:8px;font-size:12px;width:25%;vertical-align:top;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(impact)}</td>
+      </tr>
+      <tr><td colspan="4" style="height:6px;line-height:6px;font-size:0;"></td></tr>
+    `);
+  });
+  if(!rows.length){
+    return `<p style="font-size:12px;font-style:italic;font-family:'Aptos','Segoe UI',Arial,sans-serif;">No referrals recorded.</p>`;
+  }
+  return `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+      <tr>
+        <td style="background:${KEYREF_HEADER};color:#ffffff;border:1px solid #ffffff;padding:7px 8px;font-size:14px;text-align:center;font-weight:bold;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Business Need</td>
+        <td style="background:${KEYREF_HEADER};color:#ffffff;border:1px solid #ffffff;padding:7px 8px;font-size:14px;text-align:center;font-weight:bold;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Referral / Provider</td>
+        <td style="background:${KEYREF_HEADER};color:#ffffff;border:1px solid #ffffff;padding:7px 8px;font-size:14px;text-align:center;font-weight:bold;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Outline</td>
+        <td style="background:${KEYREF_HEADER};color:#ffffff;border:1px solid #ffffff;padding:7px 8px;font-size:14px;text-align:center;font-weight:bold;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Intended Impact</td>
+      </tr>
+      <tr><td colspan="4" style="height:6px;line-height:6px;font-size:0;"></td></tr>
+      ${rows.join('')}
+    </table>
+  `;
+}
+
+function buildSupportTables(){
+  const slots = [
+    {prov:'ref1Provider',intro:'ref1Intro',check:'ref1Check',review:'ref1Review',impact:'ref1ImpactDate'},
+    {prov:'ref2Provider',intro:'ref2Intro',check:'ref2Check',review:'ref2Review',impact:'ref2ImpactDate'},
+    {prov:'ref3Provider',intro:'ref3Intro',check:'ref3Check',review:'ref3Review',impact:'ref3ImpactDate'}
+  ];
+  const rows = [];
+
+  slots.forEach(s => {
+    const providerName = $(s.prov).value;
+    const intro  = $(s.intro).value  || '—';
+    const check  = $(s.check).value  || '—';
+    const review = $(s.review).value || '—';
+    const impact = $(s.impact).value || '—';
+
+    if (!providerName && intro==='—' && check==='—' && review==='—' && impact==='—') return;
+
+    rows.push(`
+      <tr>
+        <td style="background:#ffffff;font-size:12px;padding:11px 6px;border:1px solid #d1d5db;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">
+          <strong>${escapeHtml(providerName || '—')}</strong>
+        </td>
+        <td style="background:#ffffff;font-size:12px;padding:11px 6px;border:1px solid #d1d5db;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">
+          ${intro}
+        </td>
+        <td style="background:#ffffff;font-size:12px;padding:11px 6px;border:1px solid #d1d5db;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">
+          ${check}
+        </td>
+        <td style="background:#ffffff;font-size:12px;padding:11px 6px;border:1px solid #d1d5db;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">
+          ${review}
+        </td>
+        <td style="background:#ffffff;font-size:12px;padding:11px 6px;border:1px solid #d1d5db;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">
+          ${impact}
+        </td>
+      </tr>
+      <tr>
+        <td colspan="5" style="height:6px;line-height:6px;font-size:0;"></td>
+      </tr>
+    `);
+  });
+
+  if (!rows.length) {
+    rows.push(`
+      <tr>
+        <td style="background:#ffffff;font-size:12px;padding:11px 6px;border:1px solid #d1d5db;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;"><strong>—</strong></td>
+        <td style="background:#ffffff;font-size:12px;padding:11px 6px;border:1px solid #d1d5db;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">—</td>
+        <td style="background:#ffffff;font-size:12px;padding:11px 6px;border:1px solid #d1d5db;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">—</td>
+        <td style="background:#ffffff;font-size:12px;padding:11px 6px;border:1px solid #d1d5db;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">—</td>
+        <td style="background:#ffffff;font-size:12px;padding:11px 6px;border:1px solid #d1d5db;text-align:center;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">—</td>
+      </tr>
+    `);
+  }
+
+  return `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;table-layout:fixed;mso-table-lspace:0pt;mso-table-rspace:0pt;margin-bottom:10px;">
+      <tr>
+        <td style="background:${STEP1};color:#ffffff;font-size:14px;font-weight:bold;padding:20px 6px;border-right:4px solid #ffffff;text-align:center;width:20%;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">1. Support</td>
+        <td style="background:${STEP2};color:#ffffff;font-size:14px;font-weight:bold;padding:20px 6px;border-right:4px solid #ffffff;text-align:center;width:20%;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">2. Introduction By</td>
+        <td style="background:${STEP3};color:#ffffff;font-size:14px;font-weight:bold;padding:20px 6px;border-right:4px solid #ffffff;text-align:center;width:20%;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">3. Check-In</td>
+        <td style="background:${STEP4};color:#ffffff;font-size:14px;font-weight:bold;padding:20px 6px;border-right:4px solid #ffffff;text-align:center;width:20%;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">4. Review</td>
+        <td style="background:${STEP5};color:#ffffff;font-size:14px;font-weight:bold;padding:20px 6px;text-align:center;width:20%;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">5. Impact</td>
+      </tr>
+      <tr><td colspan="5" style="height:6px;line-height:6px;font-size:0;"></td></tr>
+      ${rows.join('')}
+    </table>
+  `;
+}
+
+function getSectorForEmail(){
+  const sel=$('sector').value;
+  if(sel==='Other'){
+    return $('sectorOther').value || 'Other';
+  }
+  return sel;
+}
+
+function emailHTML(){
+  const bizName=$('bizName').value;
+  const contactName=$('contactName').value;
+  const contactEmail=$('contactEmail').value;
+  const sector=getSectorForEmail();
+  const employees=$('employees').value;
+  const advisor=$('advisor').value;
+  const college=$('college').value;
+  const planDate=$('planDate').value;
+  const supportSumm=$('supportSummary').value;
+
+  return `
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-family:'Aptos','Segoe UI',Arial,sans-serif;font-size:11px;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+    <tr>
+      <td align="center" style="padding:0 0 18px 0;">
+        <table width="640" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;background:#ffffff;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+          <tr>
+            <td style="padding:10px 12px 4px 12px; text-align:right;">
+              <img src="gmcolleges-logo.png"
+                   alt="GMColleges"
+                   width="140"
+                   style="display:block;border:0;outline:0;text-decoration:none;-ms-interpolation-mode:bicubic;">
+            </td>
+          </tr>
+          <tr>
+            <td style="background:${BRAND_PURPLE}; padding:10px 12px; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif; font-size:20px; font-weight:bold;border:1px solid #ffffff;">
+              Innovation Action Plan
+            </td>
+          </tr>
+          <tr>
+            <td style="padding-top:8px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-family:'Aptos','Segoe UI',Arial,sans-serif;table-layout:fixed;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+                <tr>
+                  <td width="25%" style="background:${HEADER_BLUE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-weight:bold; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Business Name</td>
+                  <td width="25%" style="background:${CLIENT_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(bizName)}</td>
+                  <td width="25%" style="background:${HEADER_BLUE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-weight:bold; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Business Contact</td>
+                  <td width="25%" style="background:${CLIENT_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(contactName)}</td>
+                </tr>
+                <tr><td colspan="4" style="height:8px;line-height:8px;font-size:0;"></td></tr>
+                <tr>
+                  <td style="background:${HEADER_BLUE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-weight:bold; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Email</td>
+                  <td style="background:${CLIENT_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(contactEmail)}</td>
+                  <td style="background:${HEADER_BLUE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-weight:bold; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Sector</td>
+                  <td style="background:${CLIENT_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(sector)}</td>
+                </tr>
+                <tr><td colspan="4" style="height:8px;line-height:8px;font-size:0;"></td></tr>
+                <tr>
+                  <td style="background:${HEADER_BLUE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-weight:bold; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">No. of employees</td>
+                  <td style="background:${CLIENT_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(employees)}</td>
+                  <td style="background:${HEADER_BLUE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-weight:bold; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Date</td>
+                  <td style="background:${CLIENT_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(planDate)}</td>
+                </tr>
+                <tr><td colspan="4" style="height:8px;line-height:8px;font-size:0;"></td></tr>
+                <tr>
+                  <td style="background:${INTERNAL_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-weight:bold; color:#111827; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Innovation Hub</td>
+                  <td style="background:${INTERNAL_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(college)}</td>
+                  <td style="background:${INTERNAL_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-weight:bold; color:#111827; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">BIA</td>
+                  <td style="background:${INTERNAL_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(advisor)}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr><td style="height:8px;"></td></tr>
+          <tr>
+            <td style="background:${BRAND_PURPLE}; padding:7px 12px; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif; font-size:15px; font-weight:bold;border:1px solid #ffffff;">
+              Diagnostic Summary
+            </td>
+          </tr>
+          <tr><td style="height:4px;"></td></tr>
+          <tr><td>${buildDiagnosticTable()}</td></tr>
+
+          <tr><td style="height:10px;"></td></tr>
+          <tr>
+            <td style="background:${BRAND_PURPLE}; padding:7px 12px; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif; font-size:15px; font-weight:bold;border:1px solid #ffffff;">
+              Business Support Summary
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:8px 0 10px 0; font-size:12px; line-height:1.35; font-family:'Aptos','Segoe UI',Arial,sans-serif; word-break:break-word; overflow-wrap:break-word; max-width:100%;mso-line-height-rule:exactly;">
+              ${escapeHtml(supportSumm)}
+            </td>
+          </tr>
+
+          <tr><td style="height:10px;"></td></tr>
+          <tr>
+            <td style="background:${BRAND_PURPLE}; padding:7px 12px; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif; font-size:15px; font-weight:bold;border:1px solid #ffffff;">
+              Key Referrals
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0 10px 0;">
+              ${buildKeyReferralsTable()}
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background:${BRAND_PURPLE}; padding:7px 12px; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif; font-size:15px; font-weight:bold;border:1px solid #ffffff;">
+              Action Plan / Roadmap
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0 4px 0;">
+              <img src="innovation-journey.png"
+                   alt="Innovation journey"
+                   width="616"
+                   style="display:block;border:0;outline:0;text-decoration:none;margin-bottom:6px;-ms-interpolation-mode:bicubic;">
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 0 16px 0;">
+              ${buildSupportTables()}
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+  `;
+}
+
+function renderPreview(){
+  const prev=$('emailPreview');
+  if(prev) prev.innerHTML=emailHTML();
+}
+
+function copyRenderedEmail(){
+  const el=$('emailPreview');
+  if(!el) return;
+  const range=document.createRange();
+  range.selectNodeContents(el);
+  const sel=window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  try{
+    document.execCommand('copy');
+    alert('Email content copied – open Outlook and paste (Ctrl+V).');
+  }catch(e){
+    alert('Could not copy automatically – select the preview and copy.');
+  }
+  sel.removeAllRanges();
+}
+
+/* date + validation helpers */
+function todayISO(){
+  return new Date().toISOString().slice(0,10);
+}
+function validateDates(idx){
+  const today=todayISO();
+  const intro=$('ref'+idx+'Intro');
+  const check=$('ref'+idx+'Check');
+  const review=$('ref'+idx+'Review');
+  const impact=$('ref'+idx+'ImpactDate');
+
+  const introErr=$('ref'+idx+'IntroErr');
+  const checkErr=$('ref'+idx+'CheckErr');
+  const reviewErr=$('ref'+idx+'ReviewErr');
+  const impactErr=$('ref'+idx+'ImpactDateErr');
+
+  let introVal=intro.value;
+  if(introVal){
+    if(introVal < today){
+      introVal=today;
+      intro.value=introVal;
+      introErr.style.display='block';
+    }else{
+      introErr.style.display='none';
+    }
+  }else{
+    introErr.style.display='none';
+  }
+
+  let checkVal=check.value;
+  if(checkVal){
+    const minCheck = (introVal && introVal>today) ? introVal : today;
+    if(checkVal < minCheck){
+      checkVal=minCheck;
+      check.value=checkVal;
+      checkErr.style.display='block';
+    }else{
+      checkErr.style.display='none';
+    }
+  }else{
+    checkErr.style.display='none';
+  }
+
+  let reviewVal=review.value;
+  if(reviewVal){
+    const minReview = checkVal || introVal || today;
+    const actualMin = (minReview < today) ? today : minReview;
+    if(reviewVal < actualMin){
+      reviewVal=actualMin;
+      review.value=reviewVal;
+      reviewErr.style.display='block';
+    }else{
+      reviewErr.style.display='none';
+    }
+  }else{
+    reviewErr.style.display='none';
+  }
+
+  let impactVal=impact.value;
+  if(impactVal){
+    const minImpact = reviewVal || checkVal || introVal || today;
+    const actualIm = (minImpact < today) ? today : minImpact;
+    if(impactVal < actualIm){
+      impactVal=actualIm;
+      impact.value=impactVal;
+      impactErr.style.display='block';
+    }else{
+      impactErr.style.display='none';
+    }
+  }else{
+    impactErr.style.display='none';
+  }
+}
+
+function validateEmail(){
+  const el=$('contactEmail');
+  const err=$('contactEmailErr');
+  const v=el.value.trim();
+  if(!v){ err.style.display='none'; return; }
+  const re=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if(!re.test(v)){
+    err.style.display='block';
+  }else{
+    err.style.display='none';
+  }
+}
+function validatePhone(){
+  const el=$('contactPhone');
+  const err=$('contactPhoneErr');
+  const v=el.value.trim();
+  if(!v){ err.style.display='none'; return; }
+  const clean=v.replace(/[\s\-]/g,'');
+  if(!/^0\d{9,10}$/.test(clean)){
+    err.style.display='block';
+  }else{
+    err.style.display='none';
+  }
+}
+
+function getFormData(){
+  return {
+    version:1,
+    myCollege:$('myCollege').value,
+    myBia:$('myBia').value,
+    college:$('college').value,
+    advisor:$('advisor').value,
+    bizName:$('bizName').value,
+    contactName:$('contactName').value,
+    contactEmail:$('contactEmail').value,
+    contactPhone:$('contactPhone').value,
+    sector:$('sector').value,
+    sectorOther:$('sectorOther').value,
+    employees:$('employees').value,
+    planDate:$('planDate').value,
+    q1:$('q1').value,
+    q2:$('q2').value,
+    q3:$('q3').value,
+    q4:$('q4').value,
+    q5:$('q5').value,
+    q6:$('q6').value,
+    barrierOther:$('barrierOther').value,
+    barrierOtherResp:$('barrierOtherResp').value,
+    supportSummary:$('supportSummary').value,
+    referrals:[
+      {
+        provider:$('ref1Provider').value,
+        need:$('ref1Need').value,
+        impact:$('ref1Impact').value,
+        intro:$('ref1Intro').value,
+        check:$('ref1Check').value,
+        review:$('ref1Review').value,
+        impactDate:$('ref1ImpactDate').value
+      },
+      {
+        provider:$('ref2Provider').value,
+        need:$('ref2Need').value,
+        impact:$('ref2Impact').value,
+        intro:$('ref2Intro').value,
+        check:$('ref2Check').value,
+        review:$('ref2Review').value,
+        impactDate:$('ref2ImpactDate').value
+      },
+      {
+        provider:$('ref3Provider').value,
+        need:$('ref3Need').value,
+        impact:$('ref3Impact').value,
+        intro:$('ref3Intro').value,
+        check:$('ref3Check').value,
+        review:$('ref3Review').value,
+        impactDate:$('ref3ImpactDate').value
+      }
+    ]
+  };
+}
+function setFormData(data){
+  if(!data) return;
+  $('myCollege').value=data.myCollege||'';
+  $('myBia').value=data.myBia||'';
+  $('college').value=data.college||'';
+  $('advisor').value=data.advisor||'';
+  $('bizName').value=data.bizName||'';
+  $('contactName').value=data.contactName||'';
+  $('contactEmail').value=data.contactEmail||'';
+  $('contactPhone').value=data.contactPhone||'';
+  $('sector').value=data.sector||'';
+  $('sectorOther').value=data.sectorOther||'';
+  if(data.sector==='Other'){
+    $('sectorOtherWrap').style.display='block';
+  }else{
+    $('sectorOtherWrap').style.display='none';
+  }
+  $('employees').value=data.employees||'';
+  $('planDate').value=data.planDate||'';
+  $('q1').value=data.q1||'';
+  $('q2').value=data.q2||'';
+  $('q3').value=data.q3||'';
+  $('q4').value=data.q4||'';
+  $('q5').value=data.q5||'';
+  $('q6').value=data.q6||'';
+  $('barrierOther').value=data.barrierOther||'';
+  $('barrierOtherResp').value=data.barrierOtherResp||'';
+  $('supportSummary').value=data.supportSummary||'';
+  (data.referrals||[]).forEach((r,i)=>{
+    const idx=i+1;
+    $('ref'+idx+'Provider').value=r.provider||'';
+    $('ref'+idx+'Need').value=r.need||'';
+    $('ref'+idx+'Impact').value=r.impact||'';
+    $('ref'+idx+'Intro').value=r.intro||'';
+    $('ref'+idx+'Check').value=r.check||'';
+    $('ref'+idx+'Review').value=r.review||'';
+    $('ref'+idx+'ImpactDate').value=r.impactDate||'';
+    validateDates(idx);
+  });
+  ['q1','q2','q3','q4','q5','q6'].forEach(id=>{
+    const val=$(id).value;
+    const group=$(id+'Group');
+    if(group){
+      [...group.children].forEach(card=>{
+        const input=card.querySelector('input[type=radio]');
+        if(input && input.value===val){
+          input.checked=true;
+          card.classList.add('selected');
+        }else{
+          card.classList.remove('selected');
+        }
+      });
+    }
+  });
+  if(($('q6').value||'')==='Other Bespoke response.'){
+    toggleBarrierExtras(true);
+  }else{
+    toggleBarrierExtras(false);
+  }
+  validateEmail();
+  validatePhone();
+  renderPreview();
+}
+function exportPlan(){
+  const data=getFormData();
+  const rawName=(data.bizName && data.bizName.trim()) ? data.bizName.trim() : 'client';
+  let safe=rawName
+    .replace(/[^a-z0-9\-]+/gi,'-')
+    .replace(/-+/g,'-')
+    .replace(/^-|-$/g,'')
+    .toLowerCase();
+  const filename=safe + '-action-plan.json';
+  const json=JSON.stringify(data,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function importPlanFile(file){
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      setFormData(data);
+    }catch(err){
+      alert('Could not read plan file.');
+    }
+  };
+  reader.readAsText(file);
+}
+function saveAsPdf() {
+  const html = emailHTML();
+  const w = window.open('', '_blank', 'noopener,noreferrer');
+
+  if (w) {
+    w.document.open();
+    w.document.write(`
+      <!doctype html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Innovation Action Plan</title>
+        <style>
+          @page { margin: 12mm; }
+          body { margin:0; font-family:"Aptos","Segoe UI",Arial,sans-serif; }
+        </style>
+      </head>
+      <body>
+        ${html}
+      </body>
+      </html>
+    `);
+    w.document.close();
+    w.onload = function () {
+      setTimeout(function () {
+        w.focus();
+        w.print();
+      }, 150);
+    };
+  } else {
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(`
+      <!doctype html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Innovation Action Plan</title>
+        <style>
+          @page { margin: 12mm; }
+          body { margin:0; font-family:"Aptos","Segoe UI",Arial,sans-serif; }
+        </style>
+      </head>
+      <body>
+        ${html}
+      </body>
+      </html>
+    `);
+    doc.close();
+
+    iframe.onload = function () {
+      setTimeout(function () {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        setTimeout(function () {
+          document.body.removeChild(iframe);
+        }, 1000);
+      }, 150);
+    };
+  }
+}
+
+/* init */
+renderRadioGroup('Q1 Ideas & Innovation','q1Group','q1');
+renderRadioGroup('Q2 Innovation Strategy','q2Group','q2');
+renderRadioGroup('Q3 AI Adoption','q3Group','q3');
+renderRadioGroup('Q4 Digital Strategy','q4Group','q4');
+/* keep correct key for Q5 */
+renderRadioGroup('Q5 Green Investment','q5Group','q5');
+renderRadioGroup('Q6 Biggest Barrier','q6Group','q6');
+fillReferralSelects();
+loadMyDefaults();
+renderPreview();
+</script>
+</body>
+</html>
