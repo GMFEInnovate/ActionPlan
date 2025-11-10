@@ -63,7 +63,6 @@
       font-size:12px;
       line-height:1.2;
     }
-    /* group colours */
     .btn-grey{background:#e5e7eb;color:#111827;}
     .btn-dark{background:#111827;color:#fff;}
     .btn-blue{background:#2563eb;color:#fff;}
@@ -107,7 +106,6 @@
     .option-text{font-size:7pt;line-height:1.2;}
     #q6Group{gap:3px 3px;}
     .internal-input{background:#f3f4f6;}
-    #exportHelp{margin-top:6px;font-size:11px;color:#4b5563;line-height:1.35;}
     .q6-extra{display:none;}
     .error-hint{
       font-size:11px;
@@ -254,7 +252,6 @@
         <label>Q6 – Biggest Barrier</label>
         <div id="q6Group" class="radio-group"></div>
 
-        <!-- hidden holders -->
         <input type="hidden" id="q1" />
         <input type="hidden" id="q2" />
         <input type="hidden" id="q3" />
@@ -262,7 +259,6 @@
         <input type="hidden" id="q5" />
         <input type="hidden" id="q6" />
 
-        <!-- show only if Q6 = Other -->
         <label id="barrierOtherWrap" class="q6-extra" style="margin-top:4px;">Barrier (if Other)
           <input id="barrierOther" maxlength="70" oninput="renderPreview()" placeholder="Enter the specific barrier the business has identified" />
         </label>
@@ -391,11 +387,17 @@
       </div>
 
       <input id="importPlanFile" type="file" accept=".json,application/json" style="display:none" onchange="importPlanFile(this.files[0])" />
-      <div id="exportHelp">
+
+      <!-- outlook / usage guidance -->
+      <div id="exportHelp" style="font-size:11px;color:#4b5563;line-height:1.35;">
         <p><strong>Import / Export:</strong> open or save an action plan file.</p>
         <p><strong>Copy:</strong> copies the formatted plan – open Outlook and paste.</p>
-        <p><strong>Copy as image / Download as image:</strong> use when Outlook is changing the formatting.</p>
-        <p><strong>Save as PDF:</strong> print-style view, choose “Save as PDF”.</p>
+        <p><strong>For best results in Outlook:</strong></p>
+        <ol style="margin-top:4px; padding-left:18px;">
+          <li>In Outlook go to <em>File → Options → Mail → Editor Options → Advanced</em>.</li>
+          <li>Under <em>Cut, copy, and paste</em>, set <strong>“Pasting from other programs”</strong> to <strong>Keep Source Formatting</strong>.</li>
+        </ol>
+        <p style="margin-top:4px;">If Outlook still changes the layout, use <strong>Copy as image</strong> or <strong>Download as image</strong> and paste/attach the PNG.</p>
       </div>
     </div>
   </div>
@@ -421,9 +423,9 @@ const STEP1='#0C567E', STEP2='#05799D', STEP3='#0C9BB1', STEP4='#2AB2D6', STEP5=
 const RAG_TO_HEX={Red:'#FF0000',Amber:'#FFC000',Green:'#00B050',Grey:'#E5E7EB'};
 const $=id=>document.getElementById(id);
 
-/* start empty – CSV only */
 let referralDirectory=[];
 
+/* defaults */
 function loadMyDefaults(){
   const c=localStorage.getItem('iap_my_college')||'';
   const b=localStorage.getItem('iap_my_bia')||'';
@@ -449,7 +451,7 @@ function saveMyDefaults(){
   setTimeout(()=>{$('saveStatus').textContent='';},2500);
 }
 
-/* email/phone validation */
+/* validations */
 function validateEmail(){
   const v=$('contactEmail').value.trim();
   const box=$('contactEmailErr');
@@ -466,8 +468,6 @@ function validatePhone(){
   box.style.display=ok?'none':'block';
   return ok;
 }
-
-/* date validation */
 function validateDates(n){
   const today=(new Date()).toISOString().slice(0,10);
   const intro=$('ref'+n+'Intro').value;
@@ -497,6 +497,7 @@ function validateDates(n){
   }
 }
 
+/* rubric */
 const rubric=[
   { q:'Q1 Ideas & Innovation', option:'Your business is not currently encouraging or implementing new ideas.', our:'Your business is not currently encouraging or implementing new ideas.', cons:'Without encouraging ideas, opportunities to improve efficiency, services, and competitiveness are easily lost. Ask whether this limits growth and adaptability within your business.', rag:'Red' },
   { q:'Q1 Ideas & Innovation', option:'Your business sometimes encourages and implements new ideas.', our:'Your business sometimes encourages and implements new ideas.', cons:'Think about what causes irregularity, ownership, process, or follow-through. Trialling light-touch routines such as quarterly reviews or a nominated lead could help ideas gain momentum.', rag:'Amber' },
@@ -530,6 +531,7 @@ const rubric=[
   { q:'Q6 Biggest Barrier', option:'Other Bespoke response.', our:'Other Bespoke response.', cons:'We can explore this in more depth and signpost tailored support.', rag:'Grey' }
 ];
 
+/* helper funcs */
 function escapeHtml(s){
   return (s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&gt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[m]));
 }
@@ -587,7 +589,7 @@ function renderRadioGroup(qName,containerId,inputId){
   });
 }
 
-/* CSV parsing */
+/* CSV */
 function parseSimpleCsv(text){
   const rows=[];
   let cur=[];
@@ -667,6 +669,7 @@ function lookupRubric(q,opt){
   return rubric.find(r=>r.q===q && r.option===opt) || null;
 }
 
+/* diagnostic table */
 function buildDiagnosticTable(){
   const ideas=lookupRubric('Q1 Ideas & Innovation',$('q1').value);
   const strat=lookupRubric('Q2 Innovation Strategy',$('q2').value);
@@ -746,6 +749,7 @@ function buildDiagnosticTable(){
   `;
 }
 
+/* key referrals table */
 function buildKeyReferralsTable(){
   const slots=[
     {prov:'ref1Provider',need:'ref1Need',impact:'ref1Impact'},
@@ -786,6 +790,7 @@ function buildKeyReferralsTable(){
   `;
 }
 
+/* action plan / support tables */
 function buildSupportTables(){
   const slots = [
     {prov:'ref1Provider',intro:'ref1Intro',check:'ref1Check',review:'ref1Review',impact:'ref1ImpactDate'},
@@ -867,6 +872,7 @@ function nl2br(str){
   return str.replace(/\r\n/g,'<br>').replace(/\n/g,'<br>').replace(/\r/g,'<br>');
 }
 
+/* main email HTML WITHOUT intro paragraph */
 function emailHTML(){
   const bizName=$('bizName').value;
   const contactName=$('contactName').value;
@@ -886,8 +892,9 @@ function emailHTML(){
   return `
   <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-family:'Aptos','Segoe UI',Arial,sans-serif;font-size:11px;mso-table-lspace:0pt;mso-table-rspace:0pt;">
     <tr>
-      <td align="center" style="padding:0 0 18px 0;">
+      <td align="center" style="padding:0 0 18px 0; font-family:'Aptos','Segoe UI',Arial,sans-serif;">
         <table width="640" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;background:#ffffff;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+          <!-- logo -->
           <tr>
             <td style="padding:10px 12px 4px 12px; text-align:right;">
               <img src="gmcolleges-logo.png"
@@ -896,6 +903,7 @@ function emailHTML(){
                    style="display:block;border:0;outline:0;text-decoration:none;-ms-interpolation-mode:bicubic;">
             </td>
           </tr>
+          <!-- main title -->
           <tr>
             <td style="background:${BRAND_PURPLE}; padding:10px 12px; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif; font-size:20px; font-weight:bold;border:1px solid #ffffff;">
               Innovation Action Plan
@@ -903,7 +911,9 @@ function emailHTML(){
           </tr>
           <tr>
             <td style="padding-top:8px;">
+              <!-- TOP DETAILS TABLE -->
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-family:'Aptos','Segoe UI',Arial,sans-serif;table-layout:fixed;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+                <!-- Row 1 -->
                 <tr>
                   <td width="25%" style="background:${HEADER_BLUE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-weight:bold; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Business Name</td>
                   <td width="25%" style="background:${CLIENT_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(bizName)}</td>
@@ -911,6 +921,7 @@ function emailHTML(){
                   <td width="25%" style="background:${CLIENT_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(contactName)}</td>
                 </tr>
                 <tr><td colspan="4" style="height:8px;line-height:8px;font-size:0;"></td></tr>
+                <!-- Row 2 -->
                 <tr>
                   <td style="background:${HEADER_BLUE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-weight:bold; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Email</td>
                   <td style="background:${CLIENT_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(contactEmail)}</td>
@@ -918,6 +929,7 @@ function emailHTML(){
                   <td style="background:${CLIENT_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(contactPhone)}</td>
                 </tr>
                 <tr><td colspan="4" style="height:8px;line-height:8px;font-size:0;"></td></tr>
+                <!-- Row 3 -->
                 <tr>
                   <td style="background:${HEADER_BLUE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-weight:bold; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Sector</td>
                   <td style="background:${CLIENT_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(sector)}</td>
@@ -925,6 +937,7 @@ function emailHTML(){
                   <td style="background:${CLIENT_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(employees)}</td>
                 </tr>
                 <tr><td colspan="4" style="height:8px;line-height:8px;font-size:0;"></td></tr>
+                <!-- Row 4 -->
                 <tr>
                   <td style="background:${INTERNAL_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-weight:bold; color:#111827; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">BIA</td>
                   <td style="background:${INTERNAL_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(advisor)}</td>
@@ -932,6 +945,7 @@ function emailHTML(){
                   <td style="background:${INTERNAL_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(college)}</td>
                 </tr>
                 <tr><td colspan="4" style="height:8px;line-height:8px;font-size:0;"></td></tr>
+                <!-- Row 5 -->
                 <tr>
                   <td style="background:${INTERNAL_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-weight:bold; color:#111827; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Date</td>
                   <td style="background:${INTERNAL_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(planDate)}</td>
@@ -941,6 +955,8 @@ function emailHTML(){
               </table>
             </td>
           </tr>
+
+          <!-- Diagnostic -->
           <tr><td style="height:8px;"></td></tr>
           <tr>
             <td style="background:${BRAND_PURPLE}; padding:7px 12px;">
@@ -950,6 +966,7 @@ function emailHTML(){
           <tr><td style="height:4px;"></td></tr>
           <tr><td>${diagHtml}</td></tr>
 
+          <!-- Business support summary -->
           <tr><td style="height:10px;"></td></tr>
           <tr>
             <td style="background:${BRAND_PURPLE}; padding:7px 12px;">
@@ -962,6 +979,7 @@ function emailHTML(){
             </td>
           </tr>
 
+          <!-- Key Referrals -->
           <tr><td style="height:10px;"></td></tr>
           <tr>
             <td style="background:${BRAND_PURPLE}; padding:7px 12px;">
@@ -974,6 +992,7 @@ function emailHTML(){
             </td>
           </tr>
 
+          <!-- Action Plan / Roadmap -->
           <tr>
             <td style="background:${BRAND_PURPLE}; padding:7px 12px;">
               <span style="font-size:15px; font-weight:bold; color:#ffffff;">Action Plan / Roadmap</span>
@@ -1004,6 +1023,7 @@ function renderPreview(){
   if(prev) prev.innerHTML=emailHTML();
 }
 
+/* copy to email */
 function copyRenderedEmail(){
   const el=$('emailPreview');
   if(!el) return;
@@ -1021,6 +1041,7 @@ function copyRenderedEmail(){
   sel.removeAllRanges();
 }
 
+/* JSON export/import */
 function getFormData(){
   return {
     version:1,
@@ -1162,6 +1183,7 @@ function setFormData(data){
   renderPreview();
 }
 
+/* PDF */
 function saveAsPdf() {
   const html = emailHTML();
   const w = window.open('', '_blank', 'noopener,noreferrer');
@@ -1230,9 +1252,7 @@ function saveAsPdf() {
   }
 }
 
-/* ---- image capture section ---- */
-
-/* load html2canvas when needed */
+/* html2canvas lazy loader */
 function ensureHtml2canvas(cb){
   if (typeof html2canvas !== 'undefined') {
     cb();
@@ -1266,7 +1286,7 @@ function copyImage(){
   });
 }
 
-/* try capture, if fail -> retry with stripImages=true */
+/* capture with high-res and smaller clipboard version */
 function capturePreview(sourceEl, mode, forceStrip){
   const wrapper = document.createElement('div');
   wrapper.style.position = 'fixed';
@@ -1277,6 +1297,7 @@ function capturePreview(sourceEl, mode, forceStrip){
 
   const clone = sourceEl.cloneNode(true);
 
+  // strip external images if needed (local file or fallback)
   if (forceStrip || window.location.protocol === 'file:') {
     const imgs = clone.querySelectorAll('img');
     imgs.forEach(function (img) {
@@ -1300,23 +1321,25 @@ function capturePreview(sourceEl, mode, forceStrip){
 
   html2canvas(clone, {
     backgroundColor: '#ffffff',
-    scale: 2,
+    scale: 3,
     useCORS: true
-  }).then(function(canvas){
-    const targetWidth = 640;
-    const scale = targetWidth / canvas.width;
-    const targetHeight = Math.floor(canvas.height * scale);
-    const finalCanvas = document.createElement('canvas');
-    finalCanvas.width = targetWidth;
-    finalCanvas.height = targetHeight + 20;
-    const ctx = finalCanvas.getContext('2d');
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
-    ctx.drawImage(canvas, 0, 10, targetWidth, targetHeight);
+  }).then(function(baseCanvas){
+    // high-res version for download
+    const fullWidth = 1200;
+    const fullScale = fullWidth / baseCanvas.width;
+    const fullHeight = Math.floor(baseCanvas.height * fullScale);
 
-    finalCanvas.toBlob(function(blob){
-      const name = ($('bizName').value || 'client') + '-action-plan.png';
-      if(mode === 'download'){
+    const fullCanvas = document.createElement('canvas');
+    fullCanvas.width = fullWidth;
+    fullCanvas.height = fullHeight + 20;
+    const fullCtx = fullCanvas.getContext('2d');
+    fullCtx.fillStyle = '#ffffff';
+    fullCtx.fillRect(0, 0, fullCanvas.width, fullCanvas.height);
+    fullCtx.drawImage(baseCanvas, 0, 10, fullWidth, fullHeight);
+
+    if (mode === 'download') {
+      fullCanvas.toBlob(function(blob){
+        const name = ($('bizName').value || 'client') + '-action-plan.png';
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
         link.download = name;
@@ -1324,7 +1347,23 @@ function capturePreview(sourceEl, mode, forceStrip){
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(link.href);
-      }else if(mode === 'copy'){
+        document.body.removeChild(wrapper);
+      });
+    } else if (mode === 'copy') {
+      // smaller version for clipboard so Outlook doesn't paste huge
+      const targetWidth = 700; // adjust this if you want smaller/larger paste
+      const tScale = targetWidth / fullCanvas.width;
+      const targetHeight = Math.floor(fullCanvas.height * tScale);
+
+      const smallCanvas = document.createElement('canvas');
+      smallCanvas.width = targetWidth;
+      smallCanvas.height = targetHeight;
+      const sctx = smallCanvas.getContext('2d');
+      sctx.imageSmoothingEnabled = true;
+      sctx.imageSmoothingQuality = 'high';
+      sctx.drawImage(fullCanvas, 0, 0, targetWidth, targetHeight);
+
+      smallCanvas.toBlob(function(blob){
         if (navigator.clipboard && window.ClipboardItem) {
           const item = new ClipboardItem({'image/png': blob});
           navigator.clipboard.write([item]).then(function(){
@@ -1335,13 +1374,12 @@ function capturePreview(sourceEl, mode, forceStrip){
         } else {
           alert('Copying images is not supported in this browser. Use “Download as image” instead.');
         }
-      }
-      document.body.removeChild(wrapper);
-    });
+        document.body.removeChild(wrapper);
+      });
+    }
   }).catch(function(){
     document.body.removeChild(wrapper);
     if (!forceStrip) {
-      // retry with stripped images
       capturePreview(sourceEl, mode, true);
     } else {
       alert('Could not capture image.');
