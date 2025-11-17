@@ -396,6 +396,7 @@
         <ol style="margin-top:4px; padding-left:18px;">
           <li>In Outlook go to <em>File → Options → Mail → Editor Options → Advanced</em>.</li>
           <li>Under <em>Cut, copy, and paste</em>, set <strong>“Pasting from other programs”</strong> to <strong>Keep Source Formatting</strong>.</li>
+          <li>When composing the email, type a short line first and then paste the plan.</li>
         </ol>
         <p style="margin-top:4px;">If Outlook still changes the layout, use <strong>Copy as image</strong> or <strong>Download as image</strong> and paste/attach the PNG.</p>
       </div>
@@ -423,6 +424,7 @@ const STEP1='#0C567E', STEP2='#05799D', STEP3='#0C9BB1', STEP4='#2AB2D6', STEP5=
 const RAG_TO_HEX={Red:'#FF0000',Amber:'#FFC000',Green:'#00B050',Grey:'#E5E7EB'};
 const $=id=>document.getElementById(id);
 
+/* start empty – CSV or JSON import will populate */
 let referralDirectory=[];
 
 /* defaults */
@@ -531,7 +533,7 @@ const rubric=[
   { q:'Q6 Biggest Barrier', option:'Other Bespoke response.', our:'Other Bespoke response.', cons:'We can explore this in more depth and signpost tailored support.', rag:'Grey' }
 ];
 
-/* helper funcs */
+/* helpers */
 function escapeHtml(s){
   return (s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&gt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[m]));
 }
@@ -589,7 +591,7 @@ function renderRadioGroup(qName,containerId,inputId){
   });
 }
 
-/* CSV */
+/* CSV parsing – tolerant, with BOM handling, upsert by provider */
 function parseSimpleCsv(text){
   const rows=[];
   let cur=[];
@@ -630,8 +632,13 @@ function processReferralCsvText(text){
     const provider=(r[pIdx]||'').trim();
     const outline=(r[oIdx]||'').trim();
     if(!provider) continue;
-    referralDirectory.push({provider,outline});
-    added++;
+    const existing = referralDirectory.find(x=>x.provider===provider);
+    if (existing){
+      if (outline) existing.outline = outline;
+    }else{
+      referralDirectory.push({provider,outline});
+      added++;
+    }
   }
   fillReferralSelects();
   renderPreview();
@@ -654,14 +661,33 @@ function handleReferralCsv(file){
   };
   reader.readAsText(file);
 }
+
+/* Build selects, preserving current choices and back-filling unknown providers */
 function fillReferralSelects(){
+  const ids=['ref1Provider','ref2Provider','ref3Provider'];
+  const current = Object.fromEntries(ids.map(id => [id, $(id).value]));
+
   let html='';
   if(referralDirectory.length===0){
     html='<option value="">— please import entries from Referral Partners.csv —</option>';
   }else{
-    html='<option value="">— none —</option>'+referralDirectory.map(r=>`<option value="${r.provider}">${r.provider}</option>`).join('');
+    html='<option value="">— none —</option>'
+       + referralDirectory.map(r=>`<option value="${r.provider}">${r.provider}</option>`).join('');
   }
-  ['ref1Provider','ref2Provider','ref3Provider'].forEach(id=>{$(id).innerHTML=html;});
+
+  ids.forEach(id=>{
+    const sel=$(id);
+    sel.innerHTML=html;
+    if (current[id]) {
+      if (!referralDirectory.find(r=>r.provider===current[id])) {
+        const opt=document.createElement('option');
+        opt.value=current[id];
+        opt.textContent=current[id];
+        sel.appendChild(opt);
+      }
+      sel.value=current[id];
+    }
+  });
 }
 
 function lookupRubric(q,opt){
@@ -866,13 +892,12 @@ function getSectorForEmail(){
   }
   return sel;
 }
-
 function nl2br(str){
   if(!str) return '';
   return str.replace(/\r\n/g,'<br>').replace(/\n/g,'<br>').replace(/\r/g,'<br>');
 }
 
-/* main email HTML WITHOUT intro paragraph */
+/* main email HTML (no introductory paragraph) */
 function emailHTML(){
   const bizName=$('bizName').value;
   const contactName=$('contactName').value;
@@ -894,7 +919,6 @@ function emailHTML(){
     <tr>
       <td align="center" style="padding:0 0 18px 0; font-family:'Aptos','Segoe UI',Arial,sans-serif;">
         <table width="640" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;background:#ffffff;font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-table-lspace:0pt;mso-table-rspace:0pt;">
-          <!-- logo -->
           <tr>
             <td style="padding:10px 12px 4px 12px; text-align:right;">
               <img src="gmcolleges-logo.png"
@@ -903,7 +927,6 @@ function emailHTML(){
                    style="display:block;border:0;outline:0;text-decoration:none;-ms-interpolation-mode:bicubic;">
             </td>
           </tr>
-          <!-- main title -->
           <tr>
             <td style="background:${BRAND_PURPLE}; padding:10px 12px; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif; font-size:20px; font-weight:bold;border:1px solid #ffffff;">
               Innovation Action Plan
@@ -911,9 +934,7 @@ function emailHTML(){
           </tr>
           <tr>
             <td style="padding-top:8px;">
-              <!-- TOP DETAILS TABLE -->
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-family:'Aptos','Segoe UI',Arial,sans-serif;table-layout:fixed;mso-table-lspace:0pt;mso-table-rspace:0pt;">
-                <!-- Row 1 -->
                 <tr>
                   <td width="25%" style="background:${HEADER_BLUE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-weight:bold; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Business Name</td>
                   <td width="25%" style="background:${CLIENT_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(bizName)}</td>
@@ -921,7 +942,6 @@ function emailHTML(){
                   <td width="25%" style="background:${CLIENT_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(contactName)}</td>
                 </tr>
                 <tr><td colspan="4" style="height:8px;line-height:8px;font-size:0;"></td></tr>
-                <!-- Row 2 -->
                 <tr>
                   <td style="background:${HEADER_BLUE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-weight:bold; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Email</td>
                   <td style="background:${CLIENT_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(contactEmail)}</td>
@@ -929,7 +949,6 @@ function emailHTML(){
                   <td style="background:${CLIENT_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(contactPhone)}</td>
                 </tr>
                 <tr><td colspan="4" style="height:8px;line-height:8px;font-size:0;"></td></tr>
-                <!-- Row 3 -->
                 <tr>
                   <td style="background:${HEADER_BLUE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-weight:bold; color:#ffffff; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Sector</td>
                   <td style="background:${CLIENT_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(sector)}</td>
@@ -937,7 +956,6 @@ function emailHTML(){
                   <td style="background:${CLIENT_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(employees)}</td>
                 </tr>
                 <tr><td colspan="4" style="height:8px;line-height:8px;font-size:0;"></td></tr>
-                <!-- Row 4 -->
                 <tr>
                   <td style="background:${INTERNAL_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-weight:bold; color:#111827; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">BIA</td>
                   <td style="background:${INTERNAL_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(advisor)}</td>
@@ -945,7 +963,6 @@ function emailHTML(){
                   <td style="background:${INTERNAL_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(college)}</td>
                 </tr>
                 <tr><td colspan="4" style="height:8px;line-height:8px;font-size:0;"></td></tr>
-                <!-- Row 5 -->
                 <tr>
                   <td style="background:${INTERNAL_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-weight:bold; color:#111827; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">Date</td>
                   <td style="background:${INTERNAL_SHADE}; border:1px solid #ffffff; padding:6px; font-size:12px; font-family:'Aptos','Segoe UI',Arial,sans-serif;mso-line-height-rule:exactly;">${escapeHtml(planDate)}</td>
@@ -986,11 +1003,11 @@ function emailHTML(){
               <span style="font-size:15px; font-weight:bold; color:#ffffff;">Key Referrals</span>
             </td>
           </tr>
-          <tr>
-            <td style="padding:6px 0 10px 0;">
-              ${keyRefHtml}
-            </td>
-          </tr>
+            <tr>
+              <td style="padding:6px 0 10px 0;">
+                ${keyRefHtml}
+              </td>
+            </tr>
 
           <!-- Action Plan / Roadmap -->
           <tr>
@@ -1041,10 +1058,10 @@ function copyRenderedEmail(){
   sel.removeAllRanges();
 }
 
-/* JSON export/import */
+/* JSON export/import – now includes referralDirectory */
 function getFormData(){
   return {
-    version:1,
+    version:2, /* bump: includes referralDirectory */
     myCollege:$('myCollege').value,
     myBia:$('myBia').value,
     college:$('college').value,
@@ -1094,7 +1111,8 @@ function getFormData(){
         review:$('ref3Review').value,
         impactDate:$('ref3ImpactDate').value
       }
-    ]
+    ],
+    referralDirectory: referralDirectory.slice()
   };
 }
 function exportPlan(){
@@ -1130,8 +1148,29 @@ function importPlanFile(file){
   };
   reader.readAsText(file);
 }
+
+/* set all fields from JSON – restores directory first, back-fills providers if needed */
 function setFormData(data){
   if(!data) return;
+
+  /* restore referral directory (if present) */
+  referralDirectory = Array.isArray(data.referralDirectory) ? data.referralDirectory.slice() : [];
+
+  /* back-compat: ensure providers in saved referrals exist in directory (so selects show correctly) */
+  if (Array.isArray(data.referrals)) {
+    data.referrals.forEach(r=>{
+      if (r && r.provider) {
+        if (!referralDirectory.find(x => x.provider === r.provider)) {
+          referralDirectory.push({ provider: r.provider, outline: r.outline || '' });
+        }
+      }
+    });
+  }
+
+  /* rebuild selects now the directory is ready */
+  fillReferralSelects();
+
+  /* the rest of fields */
   $('myCollege').value=data.myCollege||'';
   $('myBia').value=data.myBia||'';
   $('college').value=data.college||'';
@@ -1154,7 +1193,7 @@ function setFormData(data){
   if(data.q6==='Other Bespoke response.'){ toggleBarrierExtras(true); }
   $('barrierOther').value=data.barrierOther||'';
   $('barrierOtherResp').value=data.barrierOtherResp||'';
-  $('supportSummary').value=data.supportSummary||'';
+
   (data.referrals||[]).forEach((r,i)=>{
     const idx=i+1;
     $('ref'+idx+'Provider').value=r.provider||'';
@@ -1165,6 +1204,8 @@ function setFormData(data){
     $('ref'+idx+'Review').value=r.review||'';
     $('ref'+idx+'ImpactDate').value=r.impactDate||'';
   });
+
+  /* reselect radio “cards” */
   ['q1','q2','q3','q4','q5','q6'].forEach(id=>{
     const val=$(id).value;
     const group=$(id+'Group');
@@ -1180,6 +1221,7 @@ function setFormData(data){
       });
     }
   });
+
   renderPreview();
 }
 
@@ -1351,7 +1393,7 @@ function capturePreview(sourceEl, mode, forceStrip){
       });
     } else if (mode === 'copy') {
       // smaller version for clipboard so Outlook doesn't paste huge
-      const targetWidth = 700; // adjust this if you want smaller/larger paste
+      const targetWidth = 700; // adjust if needed
       const tScale = targetWidth / fullCanvas.width;
       const targetHeight = Math.floor(fullCanvas.height * tScale);
 
